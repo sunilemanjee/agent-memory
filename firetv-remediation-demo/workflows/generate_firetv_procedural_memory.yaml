@@ -1,0 +1,92 @@
+version: "1"
+name: generate_firetv_procedural_memory
+description: >
+  Extracts a reusable step-by-step procedure from a Fire TV customer's episodic conversation
+  history for a given issue type. The 'procedure_text' field auto-embeds via semantic_text.
+enabled: true
+tags: ["memory", "procedural", "firetv-remediation-demo"]
+
+inputs:
+  - name: user_id
+    type: string
+    required: true
+    description: "User identifier (e.g. jordan_price)"
+  - name: user_name
+    type: string
+    required: false
+    default: "Unknown User"
+    description: "Display name for the user"
+  - name: procedure_context
+    type: string
+    required: true
+    description: "Issue type slug with underscores (e.g. 'power_failure')"
+
+triggers:
+  - type: manual
+
+steps:
+  # Step 1: Search episodic memories for this user
+  - name: search_episodes
+    type: elasticsearch.request
+    with:
+      method: POST
+      path: /firetv_episodic_memory/_search
+      body:
+        query:
+          term:
+            user_id: "{{ inputs.user_id }}"
+        size: 10
+        _source:
+          - summary
+          - topic
+          - key_entities
+
+  # Step 2: AI agent extracts a reusable step-by-step procedure
+  - name: extract_procedure
+    type: ai.agent
+    agent-id: "elastic-ai-agent"
+    with:
+      message: |
+        You are a procedural memory extraction system for Fire TV customer support.
+        Analyze a customer's conversation history and extract the troubleshooting procedure
+        they've been walked through so support can pick up exactly where it left off.
+
+        Customer: {{ inputs.user_name }}
+        Issue type: {{ inputs.procedure_context }}
+
+        Their conversation history:
+        {% for hit in steps.search_episodes.output.hits.hits %}
+        - Topic: {{ hit._source.topic }}
+          Summary: {{ hit._source.summary }}
+        {% endfor %}
+
+        Based on these conversations, extract a clear, reusable procedure (4-6 numbered steps)
+        for this customer's {{ inputs.procedure_context }} issue. Make steps concrete and actionable,
+        and note which steps have already been tried.
+
+        Format your response EXACTLY as follows (no other text before or after):
+        PROCEDURE_NAME: [Short descriptive name, 3-6 words]
+        TRIGGER: [One sentence: exactly when to apply this procedure]
+        STEPS:
+        1. [First actionable step]
+        2. [Second actionable step]
+        3. [Third actionable step]
+        4. [Fourth actionable step]
+        5. [Optional fifth step]
+
+  # Step 3: Index procedural memory
+  - name: index_procedural_memory
+    type: elasticsearch.request
+    with:
+      method: PUT
+      path: /firetv_procedural_memory/_doc/{{ inputs.user_id }}_{{ inputs.procedure_context }}
+      body:
+        procedure_id: "{{ inputs.user_id }}_{{ inputs.procedure_context }}"
+        user_id: "{{ inputs.user_id }}"
+        user_name: "{{ inputs.user_name }}"
+        procedure_context: "{{ inputs.procedure_context }}"
+        procedure_text: "{{ steps.extract_procedure.output.message }}"
+        last_refined: "{{ execution.startedAt }}"
+        created_from_episodes: "{{ steps.search_episodes.output.hits.total.value }}"
+        memory_source: "workflow_extraction"
+        workflow_execution_id: "{{ execution.id }}"

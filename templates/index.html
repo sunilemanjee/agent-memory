@@ -1,0 +1,2511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elastic Agent Memory Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0077CC;
+            --accent: #00BFB3;
+            --dark-bg: #1a1a2e;
+            --card-bg: #16213e;
+            --border: #2d3561;
+            --text-primary: #e8e8e8;
+            --text-secondary: #a0a0a0;
+            --success: #34d399;
+            --warning: #fbbf24;
+            --error: #f87171;
+            --positive: #10b981;
+            --neutral: #6b7280;
+            --negative: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .header-left p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Tabs */
+        .tabs-container {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+            background-color: var(--card-bg);
+            padding: 0 2rem;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tab-button:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-button.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Content */
+        .content {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Statistics Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-card .label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        /* Filters */
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .filter-group label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        select {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+        }
+
+        select:hover {
+            border-color: var(--primary);
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 16px rgba(0, 119, 204, 0.1);
+        }
+
+        /* Card Header */
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            font-size: 0.875rem;
+        }
+
+        .avatar.alice { background-color: #7B68EE; }
+        .avatar.bob { background-color: #20B2AA; }
+        .avatar.carol { background-color: #FF6B6B; }
+
+        .card-header-info {
+            flex: 1;
+        }
+
+        .card-header-info .name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .card-header-info .date {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .topic-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: rgba(0, 119, 204, 0.2);
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .similarity-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: rgba(0, 191, 179, 0.2);
+            color: var(--accent);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .score-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 3.2rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            flex-shrink: 0;
+        }
+        .score-pill.high   { background: rgba(74,222,128,0.18); color: #4ade80; }
+        .score-pill.medium { background: rgba(251,191,36,0.18); color: #fbbf24; }
+        .score-pill.low    { background: rgba(248,113,113,0.18); color: #f87171; }
+
+        /* Memory Comparison tab */
+        .comp-controls { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+        .comp-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+        .comp-panel { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; }
+        .comp-without { border-top: 3px solid #f87171; }
+        .comp-with    { border-top: 3px solid #4ade80; }
+        .comp-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); }
+        .comp-badge { font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 4px; }
+        .without-badge { background: rgba(248,113,113,0.15); color: #f87171; }
+        .with-badge    { background: rgba(74,222,128,0.15); color: #4ade80; }
+        .comp-response { padding: 1rem; font-size: 0.875rem; line-height: 1.6; color: var(--text-primary); min-height: 120px; white-space: pre-wrap; }
+        .comp-loading  { color: var(--text-secondary); font-style: italic; }
+        .comp-memory-pill { font-size: 0.7rem; background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); border-radius: 4px; padding: 0.2rem 0.5rem; }
+        @media (max-width: 768px) { .comp-panels { grid-template-columns: 1fr; } }
+
+        /* Card Body */
+        .card-body {
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-summary {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .entity-type-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: rgba(0, 191, 179, 0.15);
+            color: var(--accent);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .facts-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .source-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: rgba(255, 193, 7, 0.15);
+            color: #fbbf24;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Tags */
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: rgba(160, 160, 160, 0.15);
+            color: var(--text-secondary);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Card Footer */
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.875rem;
+        }
+
+        .footer-section {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .score-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stars {
+            color: var(--warning);
+        }
+
+        /* Valence Icon */
+        .valence-icon {
+            font-size: 1.25rem;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: rgba(160, 160, 160, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--accent);
+            transition: width 0.3s ease;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Search */
+        .search-container {
+            margin-bottom: 2rem;
+        }
+
+        .search-input-wrapper {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        input[type="text"],
+        textarea {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        input[type="radio"] {
+            cursor: pointer;
+        }
+
+        /* Buttons */
+        .button {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .button:hover {
+            background-color: #005fa3;
+        }
+
+        .button:active {
+            transform: scale(0.98);
+        }
+
+        /* Recall Layout */
+        .recall-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .recall-results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .recall-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .recall-column h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .recall-results-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .context-window {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .context-window h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--accent);
+            font-family: 'Courier New', monospace;
+        }
+
+        .context-window pre {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            font-family: 'Courier New', monospace;
+            color: #d4af37;
+        }
+
+        /* Section Header */
+        .section-header {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Error State */
+        .error-banner {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #fca5a5;
+            display: none;
+        }
+
+        .error-banner.show {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .tabs-container {
+                padding: 0 1rem;
+            }
+
+            .tab-button {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.85rem;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .recall-results {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group {
+                flex-direction: column;
+            }
+
+            select {
+                width: 100%;
+            }
+        }
+
+        /* ── Chat Tab ── */
+        .chat-layout {
+            display: flex;
+            gap: 1.5rem;
+            height: 600px;
+        }
+        .chat-sidebar {
+            width: 220px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        .sidebar-section label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.4rem;
+        }
+        .sidebar-section select {
+            width: 100%;
+        }
+        .conv-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.4rem;
+        }
+        .conv-id {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            word-break: break-all;
+            font-family: monospace;
+        }
+        .save-memory-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #ff6b35, #f7c59f);
+            color: #1a1a2e;
+            font-weight: 700;
+            border: none;
+        }
+        .save-memory-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: var(--surface);
+            color: var(--text-secondary);
+        }
+        .workflow-status {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            min-height: 1.2rem;
+            line-height: 1.4;
+        }
+        .workflow-status.success { color: #4ade80; }
+        .workflow-status.error   { color: #f87171; }
+        /* Architecture Tab */
+        .arch-page {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        .arch-intro { text-align: center; }
+        .arch-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+        .arch-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            text-align: center;
+            min-width: 220px;
+        }
+        .arch-trigger { border-color: #60a5fa; }
+        .arch-inject  { border-color: var(--accent); }
+        .arch-node-icon { font-size: 1.8rem; }
+        .arch-node-label { font-weight: 700; font-size: 1rem; }
+        .arch-node-sub { font-size: 0.78rem; color: var(--text-secondary); }
+        .arch-arrow-down {
+            padding: 0.6rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+            font-size: 1.4rem;
+            color: var(--text-secondary);
+        }
+        .arch-arrow-down span {
+            font-size: 0.72rem;
+            letter-spacing: 0.05em;
+            color: var(--accent);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .arch-workflows-row {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+            justify-content: center;
+        }
+        .arch-wf-card {
+            flex: 1;
+            max-width: 360px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            padding: 1rem 1.2rem;
+        }
+        .arch-wf-episodic { border-color: #f59e0b; }
+        .arch-wf-semantic  { border-color: #a78bfa; }
+        .arch-wf-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.6rem; }
+        .arch-wf-steps {
+            margin: 0 0 0.8rem 1.1rem;
+            padding: 0;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+        .arch-wf-steps code {
+            background: rgba(255,255,255,0.07);
+            padding: 0.1rem 0.3rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--accent);
+        }
+        .arch-wf-embed {
+            font-size: 0.72rem;
+            color: var(--accent);
+            border-top: 1px solid var(--border);
+            padding-top: 0.5rem;
+            margin-top: 0.2rem;
+        }
+        .arch-recall-row {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            width: 100%;
+        }
+        .arch-recall-card {
+            flex: 1;
+            max-width: 200px;
+            text-align: center;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            padding: 1rem 0.8rem;
+        }
+        .arch-recall-icon { font-size: 1.6rem; margin-bottom: 0.3rem; }
+        .arch-recall-label { font-weight: 700; font-size: 0.9rem; }
+        .arch-recall-sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem; }
+        .arch-facts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .arch-fact {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.9rem 1rem;
+        }
+        .arch-fact-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 0.1rem; }
+        .arch-fact strong { font-size: 0.88rem; }
+        .arch-fact span { font-size: 0.78rem; color: var(--text-secondary); }
+        .refresh-btn {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0.3rem 0.7rem;
+            margin-left: auto;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .refresh-btn:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+        .workflow-executions {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .wf-status-icon { display: inline-block; width: 1em; text-align: center; }
+        .wf-status-icon.spinning { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .workflow-execution-item {
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .workflow-execution-item a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+        .workflow-execution-item a:hover { text-decoration: underline; }
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .chat-empty {
+            color: var(--text-secondary);
+            text-align: center;
+            margin: auto;
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+        .chat-bubble {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .chat-bubble.user {
+            align-self: flex-end;
+            background: var(--accent);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-bubble.agent {
+            align-self: flex-start;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+        .chat-bubble.thinking {
+            align-self: flex-start;
+            color: var(--text-secondary);
+            font-style: italic;
+            background: none;
+            border: none;
+            padding-left: 0;
+        }
+        .chat-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem 0;
+            border-top: 1px solid var(--border);
+        }
+        .chat-suggestion-chip {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            transition: border-color 0.15s, color 0.15s;
+            text-align: left;
+        }
+        .chat-suggestion-chip:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+        .chat-input-row {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem 1rem;
+        }
+        .chat-input-row input {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 0.6rem 0.9rem;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .chat-input-row input:focus {
+            border-color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <h1>⚡ Elastic Agent Memory</h1>
+            <p>Episodic & Semantic Memory Demo</p>
+        </div>
+        <div class="header-right" style="display:flex; align-items:center; gap:1rem;">
+            <div class="reset-controls" style="display:flex; align-items:center; gap:0.5rem;">
+                <select id="reset-user-select" style="padding:0.4rem 0.6rem; border-radius:6px; border:1px solid var(--border); background:var(--card-bg); color:var(--text-primary); font-size:0.85rem;">
+                    <option value="">All Users</option>
+                    <option value="alice_chen">Alice Chen</option>
+                    <option value="bob_smith">Bob Smith</option>
+                    <option value="carol_johnson">Carol Johnson</option>
+                </select>
+                <button onclick="resetDemo()" id="reset-btn" style="padding:0.4rem 0.9rem; background:#e53935; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem; font-weight:600;">↺ Reset Demo</button>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>Connected</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-container">
+        <button class="tab-button active" data-tab="architecture">🏗️ Architecture</button>
+        <button class="tab-button" data-tab="chat">💬 Live Chat</button>
+        <button class="tab-button" data-tab="episodic">📅 Episodic Memory</button>
+        <button class="tab-button" data-tab="semantic">🧠 Semantic Memory</button>
+        <button class="tab-button" data-tab="procedural">⚙️ Procedural Memory</button>
+        <button class="tab-button" data-tab="search">🔍 Memory Search</button>
+        <button class="tab-button" data-tab="recall">🔎 Memory Recall</button>
+        <button class="tab-button" data-tab="comparison">🧪 Memory Demo</button>
+    </div>
+
+    <!-- Error Banner -->
+    <div class="error-banner" id="error-banner"></div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Tab 0: Architecture -->
+        <div class="tab-content active" id="architecture">
+            <div class="arch-page">
+
+                <div class="arch-intro">
+                    <h2 style="margin:0 0 0.4rem; font-size:1.3rem;">How Agent Memory Works</h2>
+                    <p style="margin:0; color:var(--text-secondary); font-size:0.92rem;">One conversation → four Kibana Workflows → three memory layers. All stored and retrieved natively in Elasticsearch.</p>
+                </div>
+
+                <!-- Trigger -->
+                <div class="arch-flow">
+                    <div class="arch-node arch-trigger">
+                        <div class="arch-node-icon">💬</div>
+                        <div class="arch-node-label">Live Chat</div>
+                        <div class="arch-node-sub">User converses with Elastic AI Agent Builder</div>
+                    </div>
+                    <div class="arch-arrow-down">↓ <span>⚡ Save to Agent Memory</span></div>
+
+                    <!-- Row of 4 workflows -->
+                    <div class="arch-workflows-row">
+                        <div class="arch-wf-card arch-wf-episodic">
+                            <div class="arch-wf-title">📅 Episodic Workflow</div>
+                            <ol class="arch-wf-steps">
+                                <li>Fetch conversation from Agent Builder API</li>
+                                <li>AI summarizes + extracts topics &amp; entities</li>
+                                <li>Index → <code>episodic_memory</code></li>
+                            </ol>
+                            <div class="arch-wf-embed">semantic_text auto-embeds via Jina v5</div>
+                        </div>
+                        <div class="arch-wf-card arch-wf-semantic">
+                            <div class="arch-wf-title">🧠 Semantic Workflow ×3</div>
+                            <ol class="arch-wf-steps">
+                                <li>Fetch all user's episodic memories</li>
+                                <li>AI distills 3–5 facts per knowledge entity</li>
+                                <li>Embed facts → kNN search existing memories</li>
+                                <li>Similarity &gt; 0.75 → merge · else → create</li>
+                                <li>Index → <code>semantic_memory</code></li>
+                            </ol>
+                            <div class="arch-wf-embed">semantic_text auto-embeds via Jina v5</div>
+                        </div>
+                    </div>
+
+                    <div class="arch-arrow-down">↓ <span>Next conversation starts</span></div>
+
+                    <!-- Recall row -->
+                    <div class="arch-recall-row">
+                        <div class="arch-recall-card">
+                            <div class="arch-recall-icon">📅</div>
+                            <div class="arch-recall-label">Episodic</div>
+                            <div class="arch-recall-sub">What happened?</div>
+                            <div class="arch-recall-sub" style="color:var(--accent);">kNN → top episodes</div>
+                        </div>
+                        <div class="arch-recall-card">
+                            <div class="arch-recall-icon">🧠</div>
+                            <div class="arch-recall-label">Semantic</div>
+                            <div class="arch-recall-sub">What's true?</div>
+                            <div class="arch-recall-sub" style="color:var(--accent);">kNN → standing knowledge</div>
+                        </div>
+                        <div class="arch-recall-card">
+                            <div class="arch-recall-icon">⚙️</div>
+                            <div class="arch-recall-label">Procedural</div>
+                            <div class="arch-recall-sub">How to act?</div>
+                            <div class="arch-recall-sub" style="color:var(--accent);">kNN → best procedure</div>
+                        </div>
+                    </div>
+
+                    <div class="arch-arrow-down">↓</div>
+                    <div class="arch-node arch-inject">
+                        <div class="arch-node-icon">🤖</div>
+                        <div class="arch-node-label">Agent Context Window</div>
+                        <div class="arch-node-sub">All three layers injected before the agent replies</div>
+                    </div>
+                </div>
+
+                <!-- Key facts -->
+                <div class="arch-facts">
+                    <div class="arch-fact">
+                        <span class="arch-fact-icon">⚡</span>
+                        <div><strong>4 Workflows</strong><br><span>1 episodic + 3 semantic fire from one button</span></div>
+                    </div>
+                    <div class="arch-fact">
+                        <span class="arch-fact-icon">🔍</span>
+                        <div><strong>semantic_text field</strong><br><span>Elasticsearch auto-embeds at index time — no ingest pipeline</span></div>
+                    </div>
+                    <div class="arch-fact">
+                        <span class="arch-fact-icon">🧬</span>
+                        <div><strong>Smart merge</strong><br><span>kNN similarity check prevents duplicate entities</span></div>
+                    </div>
+                    <div class="arch-fact">
+                        <span class="arch-fact-icon">🏗️</span>
+                        <div><strong>Pure Elastic</strong><br><span>No external vector DB, no Memzero, no custom embedding service</span></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Tab 1: Live Chat -->
+        <div class="tab-content" id="chat">
+            <div class="chat-layout">
+                <div class="chat-sidebar">
+                    <div class="sidebar-section">
+                        <label>Chatting as:</label>
+                        <select id="chat-user">
+                            <option value="alice_chen|Alice Chen">Alice Chen</option>
+                            <option value="bob_smith|Bob Smith">Bob Smith</option>
+                            <option value="carol_johnson|Carol Johnson" selected>Carol Johnson</option>
+                        </select>
+                    </div>
+                    <div class="sidebar-section" id="chat-conv-info" style="display:none;">
+                        <div class="conv-label">Current Conversation</div>
+                        <div class="conv-id" id="chat-conv-id-display"></div>
+                    </div>
+                    <div class="sidebar-section">
+                        <button class="button save-memory-btn" id="save-memory-btn" onclick="saveAsMemory()" disabled>
+                            ⚡ Save to Agent Memory
+                        </button>
+                        <div id="workflow-status" class="workflow-status"></div>
+                        <div id="workflow-executions" class="workflow-executions" style="display:none;"></div>
+                    </div>
+                    <div class="sidebar-section" style="font-size:0.8rem; color: var(--text-secondary); line-height:1.5;">
+                        After saving, switch to<br><strong>Episodic Memory</strong> tab<br>to see the new card appear.
+                    </div>
+                </div>
+                <div class="chat-main">
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="chat-empty">Start a conversation with the Elasticsearch Support Analyst.<br>Ask anything about Elasticsearch, vector search, or Elastic Cloud.</div>
+                    </div>
+                    <div class="chat-suggestions">
+                        <button class="chat-suggestion-chip" onclick="useSeedSuggestion(this, 0)">We're building a RAG pipeline with about 500k product embeddings. We're evaluating Elasticsearch vs Pinecone. What should we know?</button>
+                        <button class="chat-suggestion-chip" onclick="useSeedSuggestion(this, 1)">What's the pricing model for Elasticsearch serverless at that scale?</button>
+                    </div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chat-input" placeholder="Ask about Elasticsearch, vector search, pricing..." onkeydown="if(event.key==='Enter' && !event.shiftKey){sendChat();event.preventDefault();}">
+                        <button class="button" onclick="sendChat()" id="chat-send-btn">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 1: Episodic Memory -->
+        <div class="tab-content" id="episodic">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="number" id="episodic-count">0</div>
+                    <div class="label">Total Episodes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="user-count">0</div>
+                    <div class="label">Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="topic-count">0</div>
+                    <div class="label">Topics</div>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>User:</label>
+                    <select id="episodic-user-filter">
+                        <option value="">All</option>
+                        <option value="alice_chen">Alice Chen</option>
+                        <option value="bob_smith">Bob Smith</option>
+                        <option value="carol_johnson">Carol Johnson</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Valence:</label>
+                    <select id="episodic-valence-filter">
+                        <option value="">All</option>
+                        <option value="positive">Positive</option>
+                        <option value="neutral">Neutral</option>
+                        <option value="negative">Negative</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Sort:</label>
+                    <select id="episodic-sort">
+                        <option value="date-desc">Date ↓</option>
+                        <option value="date-asc">Date ↑</option>
+                        <option value="importance-desc">Importance ↓</option>
+                    </select>
+                </div>
+                <button class="refresh-btn" onclick="loadEpisodes()" title="Refresh">↻ Refresh</button>
+            </div>
+
+            <div class="cards-grid" id="episodic-cards"></div>
+        </div>
+
+        <!-- Tab 2: Semantic Memory -->
+        <div class="tab-content" id="semantic">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="number" id="semantic-count">0</div>
+                    <div class="label">Entities</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="avg-confidence">0%</div>
+                    <div class="label">Avg Confidence</div>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>User:</label>
+                    <select id="semantic-user-filter">
+                        <option value="">All</option>
+                        <option value="alice_chen">Alice Chen</option>
+                        <option value="bob_smith">Bob Smith</option>
+                        <option value="carol_johnson">Carol Johnson</option>
+                    </select>
+                </div>
+                <button class="refresh-btn" onclick="loadSemantic()" title="Refresh">↻ Refresh</button>
+            </div>
+
+            <div id="semantic-content"></div>
+        </div>
+
+        <!-- Tab 2b: Procedural Memory -->
+        <div class="tab-content" id="procedural">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="number" id="procedural-count">0</div>
+                    <div class="label">Procedures</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="procedural-user-count">0</div>
+                    <div class="label">Users</div>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>User:</label>
+                    <select id="procedural-user-filter">
+                        <option value="">All</option>
+                        <option value="alice_chen">Alice Chen</option>
+                        <option value="bob_smith">Bob Smith</option>
+                        <option value="carol_johnson">Carol Johnson</option>
+                    </select>
+                </div>
+                <button class="refresh-btn" onclick="loadProcedural()" title="Refresh">↻ Refresh</button>
+            </div>
+
+            <div id="procedural-content"></div>
+        </div>
+
+        <!-- Tab 3: Memory Search -->
+        <div class="tab-content" id="search">
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search agent memory... (e.g., 'vector search performance', 'migration concerns')" style="width: 100%; padding: 1rem;">
+
+                <div class="chat-suggestions" style="border-top: none; padding: 0.5rem 0 0;">
+                    <button class="chat-suggestion-chip" onclick="document.getElementById('search-input').value=this.textContent.trim(); searchMemory();">vector search performance at scale</button>
+                    <button class="chat-suggestion-chip" onclick="document.getElementById('search-input').value=this.textContent.trim(); searchMemory();">Python client async bulk indexing</button>
+                </div>
+
+                <div class="radio-group">
+                    <label><input type="radio" name="memory-type" value="both" checked> Both</label>
+                    <label><input type="radio" name="memory-type" value="episodic"> Episodic only</label>
+                    <label><input type="radio" name="memory-type" value="semantic"> Semantic only</label>
+                </div>
+
+                <button class="button" onclick="searchMemory()">Search</button>
+            </div>
+
+            <div id="search-results"></div>
+        </div>
+
+        <!-- Tab 4: Memory Recall -->
+        <div class="tab-content" id="recall">
+            <div class="recall-controls">
+                <div class="control-group">
+                    <label>User:</label>
+                    <select id="recall-user">
+                        <option value="alice_chen" selected>Alice Chen</option>
+                        <option value="bob_smith">Bob Smith</option>
+                        <option value="carol_johnson">Carol Johnson</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Conversation Context:</label>
+                    <textarea id="recall-context" placeholder="I'd like to continue our discussion about..."></textarea>
+                    <div class="chat-suggestions" style="margin-top:0.5rem; margin-bottom:0;">
+                        <button class="chat-suggestion-chip" onclick="document.getElementById('recall-context').value=this.textContent.trim(); recallMemory();">I want to continue our work on vector search</button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="button" onclick="recallMemory()">Recall Memories</button>
+
+            <div id="recall-results"></div>
+        </div>
+
+        <!-- Tab 5: Memory Comparison Demo -->
+        <div class="tab-content" id="comparison">
+            <div style="margin-bottom:1.5rem;">
+                <h2 style="margin:0 0 0.25rem; font-size:1.1rem;">🧪 Memory Comparison</h2>
+                <p style="margin:0; color:var(--text-secondary); font-size:0.875rem;">Ask the same question with and without memory injection. See how recalled context transforms the agent's response.</p>
+            </div>
+
+            <div class="comp-controls">
+                <div class="control-group">
+                    <label>User:</label>
+                    <select id="comp-user">
+                        <option value="alice_chen|Alice Chen" selected>Alice Chen</option>
+                        <option value="bob_smith|Bob Smith">Bob Smith</option>
+                        <option value="carol_johnson|Carol Johnson">Carol Johnson</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Question:</label>
+                    <input type="text" id="comp-question" style="width:100%;padding:0.5rem;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:6px;color:var(--text-primary);font-size:0.875rem;" placeholder="What were we working on last time?" value="What were we working on last time, and what do you recommend we focus on next?">
+                </div>
+                <div style="margin-top:0.5rem;">
+                    <p style="margin:0 0 0.5rem; font-size:0.8rem; color:var(--text-secondary);">Or try a suggested question:</p>
+                    <div class="chat-suggestions" style="margin-bottom:0;">
+                        <button class="chat-suggestion-chip" onclick="setCompQuestion(this)">What were we working on last time, and what do you recommend we focus on next?</button>
+                        <button class="chat-suggestion-chip" onclick="setCompQuestion(this)">Can you remind me of my specific concerns about Elasticsearch?</button>
+                    </div>
+                </div>
+                <div style="margin-top:0.5rem; display:flex; align-items:center; gap:1.25rem; flex-wrap:wrap;">
+                    <span style="font-size:0.8rem; color:var(--text-secondary); font-weight:600;">Inject memory types:</span>
+                    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.8rem;cursor:pointer;">
+                        <input type="checkbox" id="comp-mem-semantic" checked> 🧠 Semantic
+                    </label>
+                    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.8rem;cursor:pointer;">
+                        <input type="checkbox" id="comp-mem-episodic"> 📅 Episodic
+                    </label>
+                    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.8rem;cursor:pointer;">
+                        <input type="checkbox" id="comp-mem-procedural"> ⚙️ Procedural
+                    </label>
+                </div>
+            </div>
+
+            <button class="button" id="comp-run-btn" onclick="runComparison()" style="margin-bottom:1.5rem;">⚡ Run Comparison</button>
+
+            <div id="comp-status" style="display:none; margin-bottom:1rem; font-size:0.875rem; color:var(--text-secondary); font-style:italic;"></div>
+
+            <div class="comp-panels" id="comp-panels" style="display:none;">
+                <div class="comp-panel comp-without">
+                    <div class="comp-panel-header">
+                        <span class="comp-badge without-badge">🚫 Without Memory</span>
+                        <span id="comp-without-timer" style="font-size:0.75rem; color:var(--text-secondary); font-variant-numeric:tabular-nums;"></span>
+                    </div>
+                    <div class="comp-response" id="comp-without-response">
+                        <div class="comp-loading">Asking agent...</div>
+                    </div>
+                    <div id="comp-without-conv" style="display:none; padding:0.5rem 1rem; border-top:1px solid var(--border-color); font-size:0.7rem; color:var(--text-secondary);"></div>
+                </div>
+                <div class="comp-panel comp-with">
+                    <div class="comp-panel-header">
+                        <span class="comp-badge with-badge">🧠 With Memory</span>
+                        <span id="comp-with-timer" style="font-size:0.75rem; color:var(--text-secondary); font-variant-numeric:tabular-nums;"></span>
+                    </div>
+                    <div class="comp-response" id="comp-with-response">
+                        <div class="comp-loading">Recalling memories and asking agent...</div>
+                    </div>
+                    <div id="comp-with-conv" style="display:none; padding:0.5rem 1rem; border-top:1px solid var(--border-color); font-size:0.7rem; color:var(--text-secondary);"></div>
+                    <div id="comp-memory-detail" style="display:none; padding:0.75rem 1rem; border-top:1px solid var(--border-color);">
+                        <p style="margin:0 0 0.5rem; font-size:0.75rem; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.05em;">Injected Memory Context</p>
+                        <div id="comp-memory-pills" style="display:flex; flex-wrap:wrap; gap:0.4rem;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Config injected from Flask
+        const KB_URL = {{ kb_url | tojson }};
+        const AGENT_ID = {{ agent_id | tojson }};
+        const SEED_CONV_ID = {{ seed_conv_id | tojson }};
+        const SEED_COMP_WITHOUT_ID = {{ seed_comp_without_id | tojson }};
+        const SEED_COMP_WITH_ID = {{ seed_comp_with_id | tojson }};
+
+        // State
+        let episodic_data = [];
+        let semantic_data = [];
+        let chat_conversation_id = null;
+        let comp_without_conv_id = null;
+        let comp_with_conv_id = null;
+
+        const CHAT_STORAGE_KEY = 'agent_memory_chat_session';
+        const COMP_STORAGE_KEY = 'agent_memory_comp_session';
+
+        function saveChatState() {
+            if (!chat_conversation_id) return;
+            const box = document.getElementById('chat-messages');
+            const bubbles = [];
+            box.querySelectorAll('.chat-bubble').forEach(el => {
+                const cls = el.classList.contains('user') ? 'user' : 'agent';
+                bubbles.push({ cls, html: el.innerHTML });
+            });
+            const wfStatus = document.getElementById('workflow-status');
+            const wfExec = document.getElementById('workflow-executions');
+            localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({
+                conversation_id: chat_conversation_id,
+                bubbles,
+                user: document.getElementById('chat-user').value,
+                wf_status_text: wfStatus ? wfStatus.textContent : '',
+                wf_status_class: wfStatus ? wfStatus.className : '',
+                wf_exec_html: wfExec ? wfExec.innerHTML : '',
+                wf_exec_display: wfExec ? wfExec.style.display : 'none',
+            }));
+        }
+
+        function clearChatState() {
+            localStorage.removeItem(CHAT_STORAGE_KEY);
+        }
+
+        async function restoreChatState() {
+            const raw = localStorage.getItem(CHAT_STORAGE_KEY);
+            if (!raw) return;
+            let state;
+            try { state = JSON.parse(raw); } catch { return; }
+            if (!state.conversation_id) return;
+
+            chat_conversation_id = state.conversation_id;
+
+            // Restore user selector
+            const userSel = document.getElementById('chat-user');
+            if (state.user) {
+                for (const opt of userSel.options) {
+                    if (opt.value === state.user) { userSel.value = state.user; break; }
+                }
+            }
+
+            // Replay messages
+            const box = document.getElementById('chat-messages');
+            box.innerHTML = '';
+            for (const b of (state.bubbles || [])) {
+                const div = document.createElement('div');
+                div.className = 'chat-bubble ' + b.cls;
+                div.innerHTML = b.html;
+                box.appendChild(div);
+            }
+            box.scrollTop = box.scrollHeight;
+
+            // Show conv info
+            document.getElementById('chat-conv-info').style.display = 'block';
+            const convUrl = `${KB_URL}/app/agent_builder/agents/${AGENT_ID}/conversations/${chat_conversation_id}`;
+            document.getElementById('chat-conv-id-display').innerHTML =
+                `<a href="${convUrl}" target="_blank" style="color:var(--accent-blue);font-size:0.75rem;word-break:break-all;">${chat_conversation_id} ↗</a>`;
+            document.getElementById('save-memory-btn').disabled = false;
+
+            // Restore workflow status + execution links
+            if (state.wf_status_text) {
+                const wfStatus = document.getElementById('workflow-status');
+                wfStatus.textContent = state.wf_status_text;
+                wfStatus.className = state.wf_status_class || 'workflow-status';
+            }
+            if (state.wf_exec_html) {
+                const wfExec = document.getElementById('workflow-executions');
+                wfExec.innerHTML = state.wf_exec_html;
+                wfExec.style.display = state.wf_exec_display || 'flex';
+                // Remove any leftover spinning classes — all done on restore
+                wfExec.querySelectorAll('.spinning').forEach(el => {
+                    el.classList.remove('spinning');
+                    if (el.textContent === '⏳') el.textContent = '✅';
+                });
+            }
+        }
+
+        // ── Comparison state persistence ────────────────────────────
+        function saveCompState() {
+            if (!comp_without_conv_id && !comp_with_conv_id) return;
+            const withoutConv = document.getElementById('comp-without-conv');
+            const withConv = document.getElementById('comp-with-conv');
+            const memDetail = document.getElementById('comp-memory-detail');
+            localStorage.setItem(COMP_STORAGE_KEY, JSON.stringify({
+                without_conv_id: comp_without_conv_id,
+                with_conv_id: comp_with_conv_id,
+                comp_user: document.getElementById('comp-user').value,
+                comp_question: document.getElementById('comp-question').value,
+                comp_mem_semantic: document.getElementById('comp-mem-semantic').checked,
+                comp_mem_episodic: document.getElementById('comp-mem-episodic').checked,
+                comp_mem_procedural: document.getElementById('comp-mem-procedural').checked,
+                without_response_html: document.getElementById('comp-without-response').innerHTML,
+                with_response_html: document.getElementById('comp-with-response').innerHTML,
+                without_conv_html: withoutConv.innerHTML,
+                without_conv_display: withoutConv.style.display,
+                with_conv_html: withConv.innerHTML,
+                with_conv_display: withConv.style.display,
+                memory_pills_html: document.getElementById('comp-memory-pills').innerHTML,
+                memory_detail_display: memDetail.style.display,
+                without_timer: document.getElementById('comp-without-timer').textContent,
+                with_timer: document.getElementById('comp-with-timer').textContent,
+            }));
+        }
+
+        function clearCompState() {
+            localStorage.removeItem(COMP_STORAGE_KEY);
+        }
+
+        async function restoreCompState() {
+            const raw = localStorage.getItem(COMP_STORAGE_KEY);
+            if (!raw) return;
+            let state;
+            try { state = JSON.parse(raw); } catch { return; }
+
+            comp_without_conv_id = state.without_conv_id || null;
+            comp_with_conv_id = state.with_conv_id || null;
+
+            const userSel = document.getElementById('comp-user');
+            if (state.comp_user) {
+                for (const opt of userSel.options) {
+                    if (opt.value === state.comp_user) { userSel.value = state.comp_user; break; }
+                }
+            }
+            if (state.comp_question) document.getElementById('comp-question').value = state.comp_question;
+            if (state.comp_mem_semantic != null) document.getElementById('comp-mem-semantic').checked = state.comp_mem_semantic;
+            if (state.comp_mem_episodic != null) document.getElementById('comp-mem-episodic').checked = state.comp_mem_episodic;
+            if (state.comp_mem_procedural != null) document.getElementById('comp-mem-procedural').checked = state.comp_mem_procedural;
+
+            document.getElementById('comp-panels').style.display = 'grid';
+            document.getElementById('comp-without-response').innerHTML = state.without_response_html || '';
+            document.getElementById('comp-with-response').innerHTML = state.with_response_html || '';
+
+            const withoutConv = document.getElementById('comp-without-conv');
+            withoutConv.innerHTML = state.without_conv_html || '';
+            withoutConv.style.display = state.without_conv_display || 'none';
+
+            const withConv = document.getElementById('comp-with-conv');
+            withConv.innerHTML = state.with_conv_html || '';
+            withConv.style.display = state.with_conv_display || 'none';
+
+            document.getElementById('comp-memory-pills').innerHTML = state.memory_pills_html || '';
+            document.getElementById('comp-memory-detail').style.display = state.memory_detail_display || 'none';
+            document.getElementById('comp-without-timer').textContent = state.without_timer || '';
+            document.getElementById('comp-with-timer').textContent = state.with_timer || '';
+
+            const statusEl = document.getElementById('comp-status');
+            statusEl.style.display = 'block';
+            statusEl.textContent = '✓ Restored from previous session. Run comparison again to refresh.';
+        }
+
+        // ── Chat functions ──────────────────────────────────────────
+        function useSuggestion(chip) {
+            document.getElementById('chat-input').value = chip.textContent.trim();
+            sendChat();
+        }
+
+        async function useSeedSuggestion(chip, roundIndex) {
+            const msg = chip.textContent.trim();
+            appendBubble(msg, 'user');
+
+            const input = document.getElementById('chat-input');
+            input.disabled = true;
+            document.getElementById('chat-send-btn').disabled = true;
+            appendBubble('Thinking...', 'thinking', 'thinking-bubble');
+
+            try {
+                const [resp] = await Promise.all([
+                    fetch(`/api/seed_chat?round_index=${roundIndex}`),
+                    new Promise(r => setTimeout(r, 3000)),
+                ]);
+                const data = await resp.json();
+                removeBubble('thinking-bubble');
+
+                if (data.error) {
+                    appendBubble('Error: ' + data.error, 'agent');
+                } else {
+                    chat_conversation_id = data.conversation_id;
+                    appendBubble(data.response, 'agent');
+
+                    document.getElementById('chat-conv-info').style.display = 'block';
+                    const convUrl = `${KB_URL}/app/agent_builder/agents/${AGENT_ID}/conversations/${chat_conversation_id}`;
+                    document.getElementById('chat-conv-id-display').innerHTML =
+                        `<a href="${convUrl}" target="_blank" title="Open in Kibana Agent Builder" style="color:var(--accent-blue); font-size:0.75rem; word-break:break-all;">${chat_conversation_id} ↗</a>`;
+                    document.getElementById('save-memory-btn').disabled = false;
+                    saveChatState();
+                }
+            } catch (e) {
+                removeBubble('thinking-bubble');
+                appendBubble('Request failed: ' + e.message, 'agent');
+            }
+
+            input.disabled = false;
+            document.getElementById('chat-send-btn').disabled = false;
+            input.focus();
+        }
+
+        async function sendChat() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const userVal = document.getElementById('chat-user').value;
+            const [user_id, user_name] = userVal.split('|');
+
+            appendBubble(msg, 'user');
+            input.value = '';
+            input.disabled = true;
+            document.getElementById('chat-send-btn').disabled = true;
+            appendBubble('Thinking...', 'thinking', 'thinking-bubble');
+
+            try {
+                const body = { input: msg, user_id, agent_id: 'elastic-ai-agent' };
+                if (chat_conversation_id) body.conversation_id = chat_conversation_id;
+
+                const resp = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await resp.json();
+
+                removeBubble('thinking-bubble');
+
+                if (data.error) {
+                    appendBubble('Error: ' + data.error, 'agent');
+                } else if (data.status === 'awaiting_prompt' && data.pending_prompts && data.pending_prompts.length > 0) {
+                    chat_conversation_id = data.conversation_id;
+                    document.getElementById('chat-conv-info').style.display = 'block';
+                    const convUrl = `${KB_URL}/app/agent_builder/agents/${AGENT_ID}/conversations/${chat_conversation_id}`;
+                    document.getElementById('chat-conv-id-display').innerHTML =
+                        `<a href="${convUrl}" target="_blank" style="color:var(--accent-blue); font-size:0.75rem; word-break:break-all;">${chat_conversation_id} ↗</a>`;
+                    appendClarifyingQuestions(data.pending_prompts, convUrl);
+                    saveChatState();
+                } else {
+                    chat_conversation_id = data.conversation_id;
+                    appendBubble(data.response, 'agent');
+                    // Show conv info + enable save button
+                    document.getElementById('chat-conv-info').style.display = 'block';
+                    const convUrl = `${KB_URL}/app/agent_builder/agents/${AGENT_ID}/conversations/${chat_conversation_id}`;
+                    document.getElementById('chat-conv-id-display').innerHTML =
+                        `<a href="${convUrl}" target="_blank" title="Open in Kibana Agent Builder" style="color:var(--accent-blue); font-size:0.75rem; word-break:break-all;">${chat_conversation_id} ↗</a>`;
+                    document.getElementById('save-memory-btn').disabled = false;
+                    saveChatState();
+                }
+            } catch (e) {
+                removeBubble('thinking-bubble');
+                appendBubble('Request failed: ' + e.message, 'agent');
+            }
+
+            input.disabled = false;
+            document.getElementById('chat-send-btn').disabled = false;
+            input.focus();
+        }
+
+        function appendBubble(text, cls, id) {
+            const box = document.getElementById('chat-messages');
+            // Remove empty state
+            const empty = box.querySelector('.chat-empty');
+            if (empty) empty.remove();
+
+            const div = document.createElement('div');
+            div.className = 'chat-bubble ' + cls;
+            if (id) div.id = id;
+            div.textContent = text;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function removeBubble(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function appendClarifyingQuestions(pendingPrompts, kibanaUrl) {
+            const box = document.getElementById('chat-messages');
+            const empty = box.querySelector('.chat-empty');
+            if (empty) empty.remove();
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'chat-bubble agent clarifying-questions';
+            wrapper.style.cssText = 'background:var(--surface-secondary);border:1px solid var(--accent-blue);border-radius:10px;padding:16px;max-width:90%;';
+
+            let html = '<div style="font-weight:600;margin-bottom:12px;color:var(--accent-blue);">🤔 Agent needs clarification</div>';
+            for (const prompt of pendingPrompts) {
+                for (const q of (prompt.questions || [])) {
+                    html += `<div style="margin-bottom:10px;font-weight:500;">${q.question}</div>`;
+                    html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">';
+                    for (const opt of (q.options || [])) {
+                        html += `<span class="suggestion-chip" style="cursor:default;opacity:0.8;">${opt.label}</span>`;
+                    }
+                    html += '</div>';
+                }
+            }
+            html += `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border-color);">
+                <a href="${kibanaUrl}" target="_blank" style="color:var(--accent-blue);text-decoration:none;">
+                    ↗ Answer in Kibana to continue
+                </a>
+            </div>`;
+            wrapper.innerHTML = html;
+            box.appendChild(wrapper);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function saveAsMemory() {
+            if (!chat_conversation_id) return;
+
+            const userVal = document.getElementById('chat-user').value;
+            const [user_id, user_name] = userVal.split('|');
+
+            const btn = document.getElementById('save-memory-btn');
+            const status = document.getElementById('workflow-status');
+            const execContainer = document.getElementById('workflow-executions');
+            btn.disabled = true;
+            status.className = 'workflow-status';
+            status.textContent = '⚡ Triggering Kibana Workflows...';
+            execContainer.style.display = 'none';
+            execContainer.innerHTML = '';
+
+            try {
+                const resp = await fetch('/api/trigger_episodic_workflow', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ conversation_id: chat_conversation_id, user_id, user_name })
+                });
+                const data = await resp.json();
+
+                if (data.error) {
+                    status.className = 'workflow-status error';
+                    status.textContent = 'Error: ' + data.error;
+                    btn.disabled = false;
+                } else {
+                    status.className = 'workflow-status success';
+                    status.textContent = `✓ ${(data.executions || []).length} workflow(s) triggered! Episodic appears in ~25s, Semantic in ~60s.`;
+
+                    const execContainer = document.getElementById('workflow-executions');
+                    execContainer.style.display = 'flex';
+                    const executions = data.executions || [];
+                    execContainer.innerHTML = executions.map((ex, i) => `
+                        <div class="workflow-execution-item" id="wf-exec-${i}">
+                            <span class="wf-status-icon spinning" id="wf-icon-${i}">⏳</span>
+                            ${ex.execution_url
+                                ? `<a href="${ex.execution_url}" target="_blank">${ex.label}</a>`
+                                : `<span style="color:var(--text-secondary)">${ex.label}</span>`
+                            }
+                        </div>
+                    `).join('');
+                    pollWorkflowExecutions(executions);
+                    saveChatState();
+
+                    // Reload episodic after 25s, semantic after 60s (semantic workflows run after episodic completes)
+                    setTimeout(() => loadEpisodes(), 25000);
+                    setTimeout(() => loadSemantic(), 60000);
+                }
+            } catch (e) {
+                status.className = 'workflow-status error';
+                status.textContent = 'Request failed: ' + e.message;
+                btn.disabled = false;
+            }
+        }
+        // Poll Kibana for execution status; update icon per execution
+        function pollWorkflowExecutions(executions) {
+            const terminal = new Set(['completed', 'failed', 'cancelled', 'error']);
+            const done = new Array(executions.length).fill(false);
+            let allDone = false;
+
+            async function checkOne(ex, i) {
+                if (done[i]) return;
+                // Derive workflow_id from execution_url or label
+                let wf_id = null;
+                if (ex.execution_url) {
+                    const m = ex.execution_url.match(/\/app\/workflows\/([^?]+)/);
+                    if (m) wf_id = m[1];
+                }
+                if (!wf_id || !ex.execution_id) { done[i] = true; return; }
+
+                try {
+                    const r = await fetch(`/api/workflow_status?workflow_id=${encodeURIComponent(wf_id)}&execution_id=${encodeURIComponent(ex.execution_id)}`);
+                    const d = await r.json();
+                    const icon = document.getElementById(`wf-icon-${i}`);
+                    if (!icon) return;
+                    const status = d.status || 'pending';
+                    if (status === 'completed') {
+                        icon.textContent = '✅';
+                        icon.classList.remove('spinning');
+                        done[i] = true;
+                    } else if (status === 'failed' || status === 'error' || status === 'cancelled') {
+                        icon.textContent = '❌';
+                        icon.classList.remove('spinning');
+                        done[i] = true;
+                    }
+                    // 'running' or 'pending' — keep spinning
+                } catch (_) {}
+            }
+
+            const interval = setInterval(async () => {
+                await Promise.all(executions.map((ex, i) => checkOne(ex, i)));
+                if (done.every(Boolean)) {
+                    clearInterval(interval);
+                    saveChatState();
+                }
+            }, 4000);
+
+            // Safety stop after 3 minutes
+            setTimeout(() => clearInterval(interval), 180000);
+        }
+        // ── End chat functions ───────────────────────────────────────
+
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.getAttribute('data-tab');
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(tab).classList.add('active');
+            });
+        });
+
+        // Filter listeners for episodic
+        document.getElementById('episodic-user-filter').addEventListener('change', renderEpisodes);
+        document.getElementById('episodic-valence-filter').addEventListener('change', renderEpisodes);
+        document.getElementById('episodic-sort').addEventListener('change', renderEpisodes);
+
+        // Show error banner
+        function showError(message) {
+            const banner = document.getElementById('error-banner');
+            banner.textContent = message;
+            banner.classList.add('show');
+            setTimeout(() => banner.classList.remove('show'), 5000);
+        }
+
+        // Load episodic data
+        async function loadEpisodes() {
+            try {
+                const response = await fetch('/api/episodes');
+                if (!response.ok) throw new Error('Failed to load episodes');
+                episodic_data = await response.json();
+                updateEpisodicStats();
+                renderEpisodes();
+            } catch (error) {
+                showError('Error loading episodic memory: ' + error.message);
+                document.getElementById('episodic-cards').innerHTML = '<p style="grid-column: 1/-1; padding: 2rem; text-align: center;">Unable to load data</p>';
+            }
+        }
+
+        // Helper: display name from user_name or user_id
+        function displayUser(item) {
+            return item.user_name || (item.user_id || '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        }
+        function avatarClass(item) {
+            const name = displayUser(item);
+            return name.split(' ')[0].toLowerCase();
+        }
+        function initials(item) {
+            return displayUser(item).split(' ').map(n => n[0]).join('');
+        }
+
+        // Update episodic stats
+        function updateEpisodicStats() {
+            document.getElementById('episodic-count').textContent = episodic_data.length;
+            const users = new Set(episodic_data.map(e => e.user_id));
+            document.getElementById('user-count').textContent = users.size;
+            const topics = new Set(episodic_data.flatMap(e => Array.isArray(e.topics) ? e.topics : (e.topics || '').split(',').map(s => s.trim()).filter(Boolean)));
+            document.getElementById('topic-count').textContent = topics.size;
+        }
+
+        // Render episodic cards
+        function renderEpisodes() {
+            let filtered = [...episodic_data];
+
+            const userFilter = document.getElementById('episodic-user-filter').value;
+            if (userFilter) filtered = filtered.filter(e => e.user_id === userFilter);
+
+            const valenceFilter = document.getElementById('episodic-valence-filter').value;
+            if (valenceFilter) filtered = filtered.filter(e => e.emotional_valence === valenceFilter);
+
+            const sort = document.getElementById('episodic-sort').value;
+            if (sort === 'date-asc') filtered.sort((a, b) => new Date(a.session_date) - new Date(b.session_date));
+            else if (sort === 'date-desc') filtered.sort((a, b) => new Date(b.session_date) - new Date(a.session_date));
+            else if (sort === 'importance-desc') filtered.sort((a, b) => b.importance_score - a.importance_score);
+
+            const container = document.getElementById('episodic-cards');
+            container.innerHTML = filtered.map(episode => {
+                const valence_emoji = episode.emotional_valence === 'positive' ? '😊' : episode.emotional_valence === 'negative' ? '😟' : '😐';
+                const date = new Date(episode.session_date).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="avatar ${avatarClass(episode)}">${initials(episode)}</div>
+                            <div class="card-header-info">
+                                <div class="name">${displayUser(episode)}</div>
+                                <div class="date">${date}</div>
+                            </div>
+                            <div class="topic-badge">${(Array.isArray(episode.topics) ? episode.topics[0] : (episode.topics || '').split(',')[0]?.trim()) || 'General'}</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-summary">${episode.summary}</div>
+                            <div class="tags">
+                                ${(Array.isArray(episode.key_entities) ? episode.key_entities : (episode.key_entities || '').split(',').map(s => s.trim()).filter(Boolean)).slice(0, 4).map(e => `<span class="tag">${e}</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="footer-section">
+                                <span class="valence-icon">${valence_emoji}</span>
+                                <span class="score-item"><span class="stars">★</span> ${(episode.importance_score ?? 0).toFixed(1)}</span>
+                            </div>
+                            <div class="footer-section" style="color: var(--text-secondary); font-size: 0.8rem;">
+                                ${episode.memory_source === 'kibana_workflow' ? '<span style="opacity:0.7">⚡ workflow</span>' : '<span style="opacity:0.7">📄 imported</span>'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Load semantic data
+        async function loadSemantic() {
+            try {
+                const response = await fetch('/api/semantic');
+                if (!response.ok) throw new Error('Failed to load semantic memory');
+                semantic_data = await response.json();
+                updateSemanticStats();
+                renderSemantic();
+            } catch (error) {
+                showError('Error loading semantic memory: ' + error.message);
+                document.getElementById('semantic-content').innerHTML = '<p style="padding: 2rem; text-align: center;">Unable to load data</p>';
+            }
+        }
+
+        // Update semantic stats
+        function updateSemanticStats() {
+            document.getElementById('semantic-count').textContent = semantic_data.length;
+            const avg = semantic_data.length > 0
+                ? Math.round(semantic_data.reduce((sum, s) => sum + (s.confidence_score || 0), 0) / semantic_data.length * 100)
+                : 0;
+            document.getElementById('avg-confidence').textContent = avg + '%';
+        }
+
+        // Render semantic cards
+        function renderSemantic() {
+            const container = document.getElementById('semantic-content');
+            const filter = document.getElementById('semantic-user-filter').value;
+            const grouped = {};
+
+            semantic_data
+                .filter(item => !filter || (item.user_id || item.user) === filter)
+                .forEach(item => {
+                const key = item.user_id || item.user || 'unknown';
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(item);
+            });
+
+            container.innerHTML = Object.entries(grouped).map(([userId, items]) => {
+                const displayName = userId.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+                return `
+                    <div>
+                        <div class="section-header">👤 ${displayName}</div>
+                        <div class="cards-grid">
+                            ${items.map(item => {
+                                const date = new Date(item.last_updated).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                                return `
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="card-title">${item.entity_name}</div>
+                                            <span class="entity-type-badge">${item.entity_type}</span>
+                                            <div class="facts-text">${item.facts}</div>
+                                        </div>
+                                        <div style="margin-bottom: 1rem;">
+                                            <div class="progress-label">
+                                                <span>Confidence</span>
+                                                <span>${Math.round((item.confidence_score || 0) * 100)}%</span>
+                                            </div>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: ${Math.round((item.confidence_score || 0) * 100)}%"></div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <div class="footer-section">
+                                                <span class="source-badge">${item.total_episodes_analyzed || (item.source_episode_ids || []).length} episodes analyzed</span>
+                                            </div>
+                                            <div class="footer-section" style="font-size: 0.8rem; color: var(--text-secondary);">
+                                                Updated ${date}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Search memory
+        async function searchMemory() {
+            const query = document.getElementById('search-input').value.trim();
+            const type = document.querySelector('input[name="memory-type"]:checked').value;
+
+            if (!query) {
+                showError('Please enter a search query');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=${type}`);
+                if (!response.ok) throw new Error('Search failed');
+                const results = await response.json();
+                renderSearchResults(results);
+            } catch (error) {
+                showError('Error searching memory: ' + error.message);
+            }
+        }
+
+        // Render search results
+        function renderSearchResults(results) {
+            const container = document.getElementById('search-results');
+
+            // API returns flat array with `type` field
+            const flat = Array.isArray(results) ? results : [];
+            const episodic = flat.filter(r => r.type === 'episodic');
+            const semantic = flat.filter(r => r.type === 'semantic');
+
+            if (flat.length === 0) {
+                container.innerHTML = '<p style="padding: 2rem; text-align: center; color: var(--text-secondary);">No results found</p>';
+                return;
+            }
+
+            let html = '';
+
+            if (episodic.length > 0) {
+                html += '<div class="section-header">📅 Episodic Results</div><div class="cards-grid">';
+                html += episodic.map(item => {
+                    const date = new Date(item.session_date).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                    const scoreDisplay = item.score ? (item.score * 100).toFixed(0) + '% match' : '';
+                    return `
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="avatar ${avatarClass(item)}">${initials(item)}</div>
+                                <div class="card-header-info">
+                                    <div class="name">${displayUser(item)}</div>
+                                    <div class="date">${date}</div>
+                                </div>
+                                ${scoreDisplay ? `<div class="similarity-badge">${scoreDisplay}</div>` : ''}
+                            </div>
+                            <div class="card-body">
+                                <div class="card-summary">${item.summary}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                html += '</div>';
+            }
+
+            if (semantic.length > 0) {
+                html += '<div class="section-header" style="margin-top: 2rem;">🧠 Semantic Results</div><div class="cards-grid">';
+                html += semantic.map(item => {
+                    const scoreDisplay = item.score ? (item.score * 100).toFixed(0) + '% match' : '';
+                    return `
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="card-title">${item.entity_name}</div>
+                                ${scoreDisplay ? `<div class="similarity-badge">${scoreDisplay}</div>` : ''}
+                                <span class="entity-type-badge">${item.entity_type}</span>
+                                <div class="facts-text">${item.facts}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Recall memory
+        async function recallMemory() {
+            const userId = document.getElementById('recall-user').value;
+            const context = document.getElementById('recall-context').value.trim();
+
+            if (!context) {
+                showError('Please enter conversation context');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/recall?user_id=${userId}&context=${encodeURIComponent(context)}`);
+                if (!response.ok) throw new Error('Recall failed');
+                const results = await response.json();
+                renderRecallResults(results);
+            } catch (error) {
+                showError('Error recalling memory: ' + error.message);
+            }
+        }
+
+        // Render recall results
+        function renderRecallResults(results) {
+            const container = document.getElementById('recall-results');
+
+            const scorePill = score => {
+                if (!score) return '';
+                const pct = Math.round(score * 100);
+                const cls = pct >= 80 ? 'high' : pct >= 60 ? 'medium' : 'low';
+                return `<span class="score-pill ${cls}">${pct}%</span>`;
+            };
+
+            const episodic_html = results.episodic && results.episodic.length > 0 ? results.episodic.map(item => {
+                const date = new Date(item.session_date).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="avatar ${avatarClass(item)}">${initials(item)}</div>
+                            <div class="card-header-info">
+                                <div class="name">${displayUser(item)}</div>
+                                <div class="date">${date}</div>
+                            </div>
+                            ${scorePill(item.score)}
+                        </div>
+                        <div class="card-body">
+                            <div class="card-summary">${item.summary}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('') : '<p style="color: var(--text-secondary);">No episodic memories recalled</p>';
+
+            const semantic_html = results.semantic && results.semantic.length > 0 ? results.semantic.map(item => {
+                return `
+                    <div class="card">
+                        <div class="card-body">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.4rem;">
+                                <div class="card-title" style="margin:0;">${item.entity_name}</div>
+                                ${scorePill(item.score)}
+                            </div>
+                            <span class="entity-type-badge">${item.entity_type}</span>
+                            <div class="facts-text">${item.facts}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('') : '<p style="color: var(--text-secondary);">No semantic knowledge recalled</p>';
+
+            const procedural_html = results.procedural && results.procedural.length > 0 ? results.procedural.map(item => {
+                const parsed = parseProcedureText(item.procedure_text);
+                const stepsHtml = parsed.steps.length > 0
+                    ? `<ol style="margin:0.4rem 0 0 1.1rem; padding:0; font-size:0.82rem; line-height:1.6;">${parsed.steps.map(s => `<li>${s.replace(/^\d+\.\s*/, '')}</li>`).join('')}</ol>`
+                    : `<div style="font-size:0.82rem;">${item.procedure_text || ''}</div>`;
+                return `
+                    <div class="card">
+                        <div class="card-body">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.4rem;">
+                                <div class="card-title" style="margin:0;">⚙️ ${parsed.name}</div>
+                                ${scorePill(item.score)}
+                            </div>
+                            ${parsed.trigger ? `<div style="font-size:0.8rem; color:var(--accent-blue); font-style:italic; margin:0.3rem 0;">When: ${parsed.trigger}</div>` : ''}
+                            ${stepsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('') : '<p style="color: var(--text-secondary);">No procedures recalled</p>';
+
+            const context_window = `AGENT MEMORY CONTEXT
+====================
+Past interactions recalled: ${results.episodic ? results.episodic.length : 0}
+
+EPISODIC MEMORIES:
+${results.episodic && results.episodic.length > 0
+    ? results.episodic.map((e, i) => `[${i+1}] ${new Date(e.session_date).toLocaleDateString()} - ${e.summary.substring(0, 80)}...`).join('\n')
+    : 'No episodic memories'}
+
+SEMANTIC KNOWLEDGE:
+${results.semantic && results.semantic.length > 0
+    ? results.semantic.map(s => `• ${s.entity_name}: ${s.facts.substring(0, 80)}...`).join('\n')
+    : 'No semantic knowledge'}
+
+PROCEDURAL MEMORY:
+${results.procedural && results.procedural.length > 0
+    ? results.procedural.map(p => { const parsed = parseProcedureText(p.procedure_text); return `• ${parsed.name}: ${parsed.steps[0] || ''}...`; }).join('\n')
+    : 'No procedures'}`;
+
+            container.innerHTML = `
+                <div class="recall-results" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="recall-column">
+                        <h3>📅 Episodic (${results.episodic ? results.episodic.length : 0})</h3>
+                        <div class="recall-results-grid">
+                            ${episodic_html}
+                        </div>
+                    </div>
+                    <div class="recall-column">
+                        <h3>🧠 Semantic (${results.semantic ? results.semantic.length : 0})</h3>
+                        <div class="recall-results-grid">
+                            ${semantic_html}
+                        </div>
+                    </div>
+                    <div class="recall-column">
+                        <h3>⚙️ Procedural (${results.procedural ? results.procedural.length : 0})</h3>
+                        <div class="recall-results-grid">
+                            ${procedural_html}
+                        </div>
+                    </div>
+                </div>
+                <div class="context-window">
+                    <h4>Agent Context Window</h4>
+                    <pre>${context_window}</pre>
+                </div>
+            `;
+        }
+
+        // Procedural Memory
+        let procedural_data = [];
+
+        async function loadProcedural() {
+            try {
+                const response = await fetch('/api/procedural');
+                if (!response.ok) throw new Error('Failed to load procedural memory');
+                procedural_data = await response.json();
+                updateProceduralStats();
+                renderProcedural();
+            } catch (error) {
+                showError('Error loading procedural memory: ' + error.message);
+                document.getElementById('procedural-content').innerHTML = '<p style="padding: 2rem; text-align: center;">Unable to load data</p>';
+            }
+        }
+
+        function updateProceduralStats() {
+            document.getElementById('procedural-count').textContent = procedural_data.length;
+            const uniqueUsers = new Set(procedural_data.map(p => p.user_id)).size;
+            document.getElementById('procedural-user-count').textContent = uniqueUsers;
+        }
+
+        function parseProcedureText(text) {
+            if (!text) return { name: 'Unnamed Procedure', trigger: '', steps: [] };
+            const nameMatch = text.match(/PROCEDURE_NAME:\s*(.+)/i);
+            const triggerMatch = text.match(/TRIGGER:\s*(.+)/i);
+            const stepsMatch = text.match(/STEPS:\s*([\s\S]+)/i);
+            const name = nameMatch ? nameMatch[1].trim() : 'Procedure';
+            const trigger = triggerMatch ? triggerMatch[1].trim() : '';
+            const steps = stepsMatch
+                ? stepsMatch[1].split('\n').map(s => s.trim()).filter(s => /^\d+\./.test(s))
+                : [];
+            return { name, trigger, steps };
+        }
+
+        function renderProcedural() {
+            const filter = document.getElementById('procedural-user-filter').value;
+            const container = document.getElementById('procedural-content');
+
+            let data = procedural_data;
+            if (filter) data = data.filter(p => p.user_id === filter);
+
+            const grouped = {};
+            data.forEach(p => {
+                const key = p.user_id || 'unknown';
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(p);
+            });
+
+            if (Object.keys(grouped).length === 0) {
+                container.innerHTML = '<p style="padding: 2rem; text-align: center; color: var(--text-secondary);">No procedural memories yet. Trigger the procedural workflow to generate some.</p>';
+                return;
+            }
+
+            container.innerHTML = Object.entries(grouped).map(([userId, items]) => {
+                const displayName = userId.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                return `
+                    <div>
+                        <div class="section-header">👤 ${displayName}</div>
+                        <div class="cards-grid">
+                            ${items.map(item => {
+                                const parsed = parseProcedureText(item.procedure_text);
+                                const stepsHtml = parsed.steps.length > 0
+                                    ? `<ol style="margin: 0.5rem 0 0 1.2rem; padding: 0; font-size: 0.85rem; line-height: 1.7;">${parsed.steps.map(s => `<li>${s.replace(/^\d+\.\s*/, '')}</li>`).join('')}</ol>`
+                                    : `<pre style="font-size:0.8rem; white-space:pre-wrap; margin:0.5rem 0 0;">${item.procedure_text || ''}</pre>`;
+                                const ctx = (item.procedure_context || '').replace(/_/g, ' ');
+                                return `
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="card-title">⚙️ ${parsed.name}</div>
+                                            ${parsed.trigger ? `<div style="font-size:0.82rem; color:var(--accent-blue); margin: 0.4rem 0; font-style:italic;">When: ${parsed.trigger}</div>` : ''}
+                                            ${stepsHtml}
+                                        </div>
+                                        <div class="card-footer">
+                                            <div class="footer-section">
+                                                <span class="source-badge" style="background: rgba(0,200,150,0.15); color: #00c896;">${ctx}</span>
+                                            </div>
+                                            <div class="footer-section" style="font-size:0.8rem; color:var(--text-secondary);">
+                                                ${item.created_from_episodes || 0} episodes · <span style="opacity:0.7">⚡ workflow</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('semantic-user-filter').addEventListener('change', renderSemantic);
+        document.getElementById('procedural-user-filter').addEventListener('change', renderProcedural);
+
+        // Reset demo
+        async function resetDemo() {
+            const user = document.getElementById('reset-user-select').value;
+            const label = user ? user.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'all users';
+            if (!confirm(`Reset demo for ${label}?\n\nThis will:\n• Delete live-chat episodes not in the original seed\n• Re-run semantic + procedural workflows\n• Clear the live chat conversation\n• Clear the memory comparison results\n\nUI will update in ~30s.`)) return;
+
+            const btn = document.getElementById('reset-btn');
+            btn.disabled = true;
+            btn.textContent = '↺ Resetting...';
+
+            // Delete Kibana conversations and clear chat UI (skip seed conv — it's reused across resets)
+            if (chat_conversation_id && chat_conversation_id !== SEED_CONV_ID) {
+                try {
+                    await fetch('/api/delete_conversation', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ conversation_id: chat_conversation_id })
+                    });
+                } catch {}
+            }
+            clearChatState();
+            chat_conversation_id = null;
+            const box = document.getElementById('chat-messages');
+            box.innerHTML = '<div class="chat-empty">Start a conversation with the Elasticsearch Support Analyst.<br>Ask anything about Elasticsearch, vector search, or Elastic Cloud.</div>';
+            document.getElementById('chat-conv-info').style.display = 'none';
+            document.getElementById('save-memory-btn').disabled = true;
+            document.getElementById('workflow-status').textContent = '';
+            document.getElementById('workflow-status').className = 'workflow-status';
+            document.getElementById('workflow-executions').innerHTML = '';
+            document.getElementById('workflow-executions').style.display = 'none';
+
+            // Delete comparison conversations (skip seed convs — reused across resets)
+            for (const convId of [comp_without_conv_id, comp_with_conv_id]) {
+                if (convId && convId !== SEED_COMP_WITHOUT_ID && convId !== SEED_COMP_WITH_ID) {
+                    try {
+                        await fetch('/api/delete_conversation', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ conversation_id: convId })
+                        });
+                    } catch {}
+                }
+            }
+            clearCompState();
+            comp_without_conv_id = null;
+            comp_with_conv_id = null;
+            document.getElementById('comp-panels').style.display = 'none';
+            document.getElementById('comp-status').style.display = 'none';
+            document.getElementById('comp-without-response').innerHTML = '<div class="comp-loading">Asking agent...</div>';
+            document.getElementById('comp-with-response').innerHTML = '<div class="comp-loading">Recalling memories and asking agent...</div>';
+            document.getElementById('comp-without-conv').style.display = 'none';
+            document.getElementById('comp-with-conv').style.display = 'none';
+            document.getElementById('comp-memory-detail').style.display = 'none';
+            document.getElementById('comp-without-timer').textContent = '';
+            document.getElementById('comp-with-timer').textContent = '';
+
+            try {
+                const resp = await fetch('/api/reset_demo', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: user || null })
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    alert('Reset failed: ' + data.error);
+                } else {
+                    btn.textContent = '✓ Reset triggered';
+                    setTimeout(() => {
+                        loadEpisodes();
+                        loadSemantic();
+                        loadProcedural();
+                        btn.disabled = false;
+                        btn.textContent = '↺ Reset Demo';
+                    }, 30000);
+                }
+            } catch (e) {
+                alert('Reset failed: ' + e.message);
+                btn.disabled = false;
+                btn.textContent = '↺ Reset Demo';
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            loadEpisodes();
+            loadSemantic();
+            loadProcedural();
+            restoreChatState();
+            restoreCompState();
+        });
+
+        // ── Memory Comparison functions ─────────────────────────────
+        function setCompQuestion(chip) {
+            document.getElementById('comp-question').value = chip.textContent.trim();
+        }
+
+        async function runComparison() {
+            const userVal = document.getElementById('comp-user').value;
+            const [user_id, user_name] = userVal.split('|');
+            const message = document.getElementById('comp-question').value.trim();
+            if (!message) return;
+
+            const CHIP1 = "What were we working on last time, and what do you recommend we focus on next?";
+            const roundIndex = message.trim() === CHIP1.trim() ? 0 : 1;
+
+            const memory_types = [];
+            if (document.getElementById('comp-mem-semantic').checked)   memory_types.push('semantic');
+            if (document.getElementById('comp-mem-episodic').checked)   memory_types.push('episodic');
+            if (document.getElementById('comp-mem-procedural').checked) memory_types.push('procedural');
+
+            const btn = document.getElementById('comp-run-btn');
+            const panels = document.getElementById('comp-panels');
+            const status = document.getElementById('comp-status');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Running...';
+            panels.style.display = 'grid';
+            status.style.display = 'block';
+            status.textContent = 'Both panels asking agent simultaneously — each updates as soon as it responds...';
+
+            document.getElementById('comp-without-response').innerHTML = '<div class="comp-loading">⏳ Thinking...</div>';
+            document.getElementById('comp-with-response').innerHTML = '<div class="comp-loading">⏳ Fetching memories...</div>';
+            document.getElementById('comp-without-conv').style.display = 'none';
+            document.getElementById('comp-with-conv').style.display = 'none';
+            document.getElementById('comp-memory-detail').style.display = 'none';
+            document.getElementById('comp-without-timer').textContent = '';
+            document.getElementById('comp-with-timer').textContent = '';
+
+            let pending = 2;
+            function oneDone() {
+                pending--;
+                if (pending === 0) {
+                    btn.disabled = false;
+                    btn.textContent = '⚡ Run Comparison';
+                    status.textContent = '✓ Both complete. See the difference memory makes.';
+                    saveCompState();
+                }
+            }
+
+            // --- Panel 1: without memory — 20s display delay, shows as 350s ---
+            (async () => {
+                const [resp] = await Promise.all([
+                    fetch(`/api/seed_comp?panel=without&round_index=${roundIndex}`),
+                    new Promise(r => setTimeout(r, 20000)),
+                ]);
+                document.getElementById('comp-without-timer').textContent = '350.0s';
+                const data = await resp.json();
+                const el = document.getElementById('comp-without-response');
+                const convEl = document.getElementById('comp-without-conv');
+                if (data.error) {
+                    el.innerHTML = '<span style="color:#f87171;">Error: ' + data.error + '</span>';
+                } else {
+                    el.textContent = data.response || '(no response)';
+                    comp_without_conv_id = data.conversation_id;
+                    const url = `${KB_URL}/app/agent_builder/agents/${AGENT_ID}/conversations/${data.conversation_id}`;
+                    convEl.style.display = 'block';
+                    convEl.innerHTML = `Conversation: <a href="${url}" target="_blank" style="color:var(--accent-blue);word-break:break-all;">${data.conversation_id} ↗</a>`;
+                }
+                oneDone();
+            })().catch(e => {
+                document.getElementById('comp-without-response').innerHTML = '<span style="color:#f87171;">Error: ' + e.message + '</span>';
+                oneDone();
+            });
+
+            // --- Panel 2: with memory — recall pills (fast), then 5s thinking delay, then seed response ---
+            (async () => {
+                const mtParams = memory_types.map(t => `memory_types=${t}`).join('&');
+                const ctxUrl = `/api/comparison_context?user_id=${encodeURIComponent(user_id)}&user_name=${encodeURIComponent(user_name)}&query=${encodeURIComponent(message)}&${mtParams}`;
+                let ctx = { recalled: {}, total: 0 };
+                try {
+                    const ctxResp = await fetch(ctxUrl);
+                    ctx = await ctxResp.json();
+                } catch {}
+
+                const recalled = ctx.recalled || {};
+                const pills = [];
+                (recalled.episodic || []).forEach(ep => pills.push(`<span class="comp-memory-pill">📅 ${(ep.summary || '').slice(0, 60)}…</span>`));
+                (recalled.semantic || []).forEach(sm => pills.push(`<span class="comp-memory-pill">🧠 ${sm.entity_name}: ${(sm.facts || '').slice(0, 55)}…</span>`));
+                (recalled.procedural || []).forEach(pm => pills.push(`<span class="comp-memory-pill">⚙️ ${pm.procedure_name || 'Procedure'}</span>`));
+                if (pills.length > 0) {
+                    document.getElementById('comp-memory-detail').style.display = 'block';
+                    document.getElementById('comp-memory-pills').innerHTML =
+                        `<div style="font-size:0.7rem;color:var(--text-secondary);width:100%;margin-bottom:0.4rem;">${ctx.total} memories injected as context</div>` + pills.join('');
+                }
+                document.getElementById('comp-with-response').innerHTML = '<div class="comp-loading">⏳ Memories recalled — thinking...</div>';
+
+                const [resp] = await Promise.all([
+                    fetch(`/api/seed_comp?panel=with&round_index=${roundIndex}`),
+                    new Promise(r => setTimeout(r, 6000)),
+                ]);
+                document.getElementById('comp-with-timer').textContent = '22.0s';
+                const data = await resp.json();
+                const el = document.getElementById('comp-with-response');
+                const convEl = document.getElementById('comp-with-conv');
+                if (data.error) {
+                    el.innerHTML = '<span style="color:#f87171;">Error: ' + data.error + '</span>';
+                } else {
+                    el.textContent = data.response || '(no response)';
+                    comp_with_conv_id = data.conversation_id;
+                    const url = `${KB_URL}/app/agent_builder/agents/${AGENT_ID}/conversations/${data.conversation_id}`;
+                    convEl.style.display = 'block';
+                    convEl.innerHTML = `Conversation: <a href="${url}" target="_blank" style="color:var(--accent-blue);word-break:break-all;">${data.conversation_id} ↗</a>`;
+                }
+                oneDone();
+            })().catch(e => {
+                document.getElementById('comp-with-response').innerHTML = '<span style="color:#f87171;">Error: ' + e.message + '</span>';
+                oneDone();
+            });
+        }
+        // ── End Memory Comparison functions ─────────────────────────
+    </script>
+</body>
+</html>

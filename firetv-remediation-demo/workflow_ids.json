@@ -1,0 +1,7 @@
+{
+  "episodic": "generate-firetv-episodic-memory",
+  "semantic": "generate-firetv-semantic-memory",
+  "procedural": "generate-firetv-procedural-memory",
+  "remediation": "generate-firetv-remediation-memory",
+  "agent": "firetv-support-specialist"
+}

@@ -1,0 +1,23 @@
+{
+  "episodic_ids": {
+    "jordan_price": [
+      "7213c14e-b589-4521-a42f-b0428090d5c8",
+      "6a151557-48ac-4c28-a583-49c73580f682",
+      "dcdf77e6-8ff2-4224-ba57-f2089a975f0a",
+      "e7382266-196f-4123-82e4-7a930f15637d"
+    ],
+    "morgan_lee": [
+      "20ef0bfd-bb95-4b2c-84d6-2ee4cce2093d",
+      "c8a77496-e671-4866-9c62-1623711f4c5e"
+    ],
+    "priya_nair": [
+      "4074cbd4-3d74-4372-9a97-a95d62ea0ffc",
+      "bf05032b-71f1-4e81-b5b2-57de90371cad"
+    ]
+  },
+  "memory_demo_conversations": {
+    "without_memory": "46b679a6-2359-437d-9b60-c40b1e4da86f",
+    "with_memory": "cc0cd6b4-de5d-45bf-88b7-2eae41099e69"
+  },
+  "live_chat_conversation": "cc0cd6b4-de5d-45bf-88b7-2eae41099e69"
+}

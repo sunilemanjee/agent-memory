@@ -1,0 +1,85 @@
+version: "1"
+name: generate_episodic_memory
+description: >
+  Generates episodic memory from an Elastic Agent Builder conversation.
+  Fetches the conversation via Kibana API, uses an AI agent to summarize it,
+  then indexes the memory into Elasticsearch. The semantic_text field type
+  automatically embeds the summary via .jina-embeddings-v5-omni-small at index time.
+enabled: true
+tags: ["memory", "episodic", "agent-memory-demo"]
+
+inputs:
+  - name: conversation_id
+    type: string
+    required: true
+    description: "Agent Builder conversation ID to convert to episodic memory"
+  - name: user_id
+    type: string
+    required: true
+    description: "User identifier (e.g. alice_chen)"
+  - name: user_name
+    type: string
+    required: false
+    default: "Unknown User"
+    description: "Display name for the user"
+
+triggers:
+  - type: manual
+
+steps:
+  # Step 1: Fetch the full conversation from Agent Builder
+  - name: fetch_conversation
+    type: kibana.request
+    with:
+      method: GET
+      path: /api/agent_builder/conversations/{{ inputs.conversation_id }}
+
+  # Step 2: Use AI agent to generate a concise summary of the conversation
+  - name: summarize_memory
+    type: ai.agent
+    agent-id: "elastic-ai-agent"
+    with:
+      message: |
+        Analyze this Elasticsearch support conversation and write a 2-3 sentence summary.
+        Focus on: what the user asked about, what was resolved, and any key follow-up items.
+        Write ONLY the summary text — no labels, no JSON, no formatting.
+
+        Conversation title: {{ steps.fetch_conversation.output.title }}
+        {% for round in steps.fetch_conversation.output.rounds %}
+        User: {{ round.input.message }}
+        Agent: {{ round.response.message }}
+        {% endfor %}
+
+  # Step 3: Extract topics using AI (separate step for topics/entities)
+  - name: extract_topics
+    type: ai.agent
+    agent-id: "elastic-ai-agent"
+    with:
+      message: |
+        From this conversation summary, extract a comma-separated list of topics (max 5).
+        Return ONLY the comma-separated list, nothing else.
+        Example: "vector search, kNN, HNSW, performance"
+
+        Summary: {{ steps.summarize_memory.output.message }}
+
+  # Step 4: Index the episodic memory — semantic_text field auto-embeds via Jina
+  - name: index_episodic_memory
+    type: elasticsearch.request
+    with:
+      method: PUT
+      path: /episodic_memory/_doc/{{ inputs.conversation_id }}
+      body:
+        conversation_id: "{{ inputs.conversation_id }}"
+        user_id: "{{ inputs.user_id }}"
+        user_name: "{{ inputs.user_name }}"
+        session_date: "{{ steps.fetch_conversation.output.created_at }}"
+        topic: "{{ steps.fetch_conversation.output.title }}"
+        summary: "{{ steps.summarize_memory.output.message }}"
+        topics: "{{ steps.extract_topics.output.message }}"
+        key_entities: "{{ steps.extract_topics.output.message }}"
+        emotional_valence: "neutral"
+        importance_score: 7.0
+        action_items: ""
+        raw_conversation_title: "{{ steps.fetch_conversation.output.title }}"
+        memory_source: "kibana_workflow"
+        workflow_execution_id: "{{ execution.id }}"

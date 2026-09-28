@@ -1,0 +1,199 @@
+version: "1"
+name: generate_firetv_remediation_memory
+description: >
+  Tracks a Fire TV customer's progress through a fixed troubleshooting ladder for a given
+  issue. Reasons over episode history + canonical ladder + warranty dates to determine which
+  steps are done, which remain, whether the ladder is exhausted, and — if exhausted and the
+  device is out of warranty — surfaces the final fallback remediation (discount offer) instead
+  of asking the customer to repeat steps already tried.
+enabled: true
+tags: ["memory", "remediation", "firetv-remediation-demo"]
+
+inputs:
+  - name: user_id
+    type: string
+    required: true
+    description: "User identifier (e.g. jordan_price)"
+  - name: user_name
+    type: string
+    required: false
+    default: "Unknown User"
+    description: "Display name for the user"
+  - name: issue_context
+    type: string
+    required: true
+    description: "Issue ladder slug (e.g. power_failure, remote_network, app_crash)"
+  - name: device
+    type: string
+    required: false
+    default: "Amazon Fire TV"
+    description: "Device name"
+  - name: purchase_date
+    type: string
+    required: true
+    description: "ISO date the device was purchased"
+  - name: warranty_expiration_date
+    type: string
+    required: true
+    description: "ISO date the warranty expires"
+  - name: ladder_steps
+    type: string
+    required: true
+    description: "Comma-separated canonical ladder steps in order, e.g. 'power cycle, factory reset via remote, test different power adapter/outlet, escalate'"
+  - name: current_date
+    type: string
+    required: true
+    description: "Today's ISO date (YYYY-MM-DD), used to evaluate warranty status. Passed explicitly since execution.startedAt is not a comparable ISO string."
+
+triggers:
+  - type: manual
+
+steps:
+  # Step 1: Search episodes for this user, scoped to this issue
+  - name: search_episodes
+    type: elasticsearch.request
+    with:
+      method: POST
+      path: /firetv_episodic_memory/_search
+      body:
+        query:
+          bool:
+            filter:
+              - term:
+                  user_id: "{{ inputs.user_id }}"
+              - term:
+                  issue_context: "{{ inputs.issue_context }}"
+        size: 10
+        sort:
+          - session_date: asc
+        _source:
+          - summary
+          - topic
+          - session_date
+
+  # Step 2: Fetch any existing remediation doc for this user + issue (search, not GET-by-id,
+  # so a missing doc returns 200 + empty hits instead of a 404 that fails the workflow)
+  - name: find_existing_remediation
+    type: elasticsearch.request
+    with:
+      method: POST
+      path: /firetv_remediation_memory/_search
+      body:
+        query:
+          term:
+            remediation_id: "{{ inputs.user_id }}_{{ inputs.issue_context }}"
+        size: 1
+
+  # Step 3: AI agent reasons over history + ladder + warranty to determine ladder state
+  - name: assess_ladder
+    type: ai.agent
+    agent-id: "elastic-ai-agent"
+    with:
+      message: |
+        You are a remediation-tracking system for Amazon Fire TV customer support. Determine
+        exactly which steps of a fixed troubleshooting ladder a customer has already tried,
+        which remain, whether the ladder is exhausted, and what to do next.
+
+        Customer: {{ inputs.user_name }} ({{ inputs.user_id }})
+        Device: {{ inputs.device }}
+        Issue: {{ inputs.issue_context }}
+        Purchase date: {{ inputs.purchase_date }}
+        Warranty expiration date: {{ inputs.warranty_expiration_date }}
+        Today's date: {{ inputs.current_date }}
+
+        Canonical troubleshooting ladder, in order:
+        {{ inputs.ladder_steps }}
+
+        Conversation history for this issue, chronological:
+        {% for hit in steps.search_episodes.output.hits.hits %}
+        - {{ hit._source.session_date }}: {{ hit._source.summary }}
+        {% endfor %}
+
+        {% if steps.find_existing_remediation.output.hits.hits %}
+        Previously recorded remediation state:
+        Steps completed: {{ steps.find_existing_remediation.output.hits.hits[0]._source.steps_completed }}
+        Steps remaining: {{ steps.find_existing_remediation.output.hits.hits[0]._source.steps_remaining }}
+        Ladder exhausted: {{ steps.find_existing_remediation.output.hits.hits[0]._source.ladder_exhausted }}
+        {% endif %}
+
+        Determine: which canonical ladder steps have been tried and failed (based on the
+        conversation history), which remain untried, and whether every step (excluding
+        "escalate") has now been tried and failed.
+
+        If the ladder is fully exhausted AND today's date is after the warranty expiration
+        date, the next action must be exactly: "Offer 10% off next Amazon Fire TV purchase —
+        all troubleshooting steps exhausted and unit is out of warranty."
+        Otherwise, the next action is the next untried step in the ladder, referencing the
+        customer's history so they are not asked to repeat what they've already done.
+
+        Format your response EXACTLY as follows (no other text before or after):
+        STEPS_COMPLETED: [comma-separated list of ladder steps already tried]
+        STEPS_REMAINING: [comma-separated list of ladder steps not yet tried]
+        LADDER_EXHAUSTED: [true or false]
+        NEXT_ACTION: [one sentence describing what to do next]
+
+  # Step 4: Judge ladder-exhausted directly from the same source context (episode history +
+  # ladder), rather than asking the AI to text-match assess_ladder's output — LLMs are
+  # unreliable at literal "does this string contain X" meta-questions, but reliable at judging
+  # the underlying facts directly. Also sidesteps the engine's broken `in`/`or` operators.
+  - name: extract_exhausted
+    type: ai.agent
+    agent-id: "elastic-ai-agent"
+    with:
+      message: |
+        Respond with EXACTLY one word, lowercase, no punctuation, nothing else: true or false.
+
+        Canonical troubleshooting ladder, in order, excluding the final escalate step:
+        {{ inputs.ladder_steps }}
+
+        Conversation history for this issue, chronological:
+        {% for hit in steps.search_episodes.output.hits.hits %}
+        - {{ hit._source.session_date }}: {{ hit._source.summary }}
+        {% endfor %}
+
+        Has every ladder step except the final "escalate" step now been tried and failed?
+
+  # Step 5: Extract a clean true/false for whether the discount offer should be issued
+  # (ladder exhausted AND warranty expired) as its own AI call, same reasoning as above.
+  - name: extract_offer
+    type: ai.agent
+    agent-id: "elastic-ai-agent"
+    with:
+      message: |
+        Respond with EXACTLY one word, lowercase, no punctuation, nothing else: true or false.
+        Ladder exhausted: {{ steps.extract_exhausted.output.message }}
+        Warranty status: {% if inputs.warranty_expiration_date < inputs.current_date %}expired{% else %}active{% endif %}
+
+        Should the 10% off next purchase discount offer be issued? Only answer true if the
+        ladder is exhausted AND the warranty is expired.
+
+  # Step 6: Index remediation memory — PUT to fixed doc ID (creates or overwrites)
+  # recommended_next_action holds the full raw STEPS_COMPLETED/STEPS_REMAINING/LADDER_EXHAUSTED/
+  # NEXT_ACTION block from assess_ladder; app.py parses it for UI display, same pattern the
+  # procedural memory workflow uses for its PROCEDURE_NAME/TRIGGER/STEPS block.
+  - name: index_remediation_memory
+    type: elasticsearch.request
+    with:
+      method: PUT
+      path: /firetv_remediation_memory/_doc/{{ inputs.user_id }}_{{ inputs.issue_context }}
+      body:
+        remediation_id: "{{ inputs.user_id }}_{{ inputs.issue_context }}"
+        user_id: "{{ inputs.user_id }}"
+        user_name: "{{ inputs.user_name }}"
+        device: "{{ inputs.device }}"
+        issue_context: "{{ inputs.issue_context }}"
+        issue_description: "{{ inputs.issue_context }}"
+        purchase_date: "{{ inputs.purchase_date }}"
+        warranty_expiration_date: "{{ inputs.warranty_expiration_date }}"
+        warranty_status: "{% if inputs.warranty_expiration_date < inputs.current_date %}expired{% else %}active{% endif %}"
+        ladder_steps: "{{ inputs.ladder_steps }}"
+        steps_completed: ""
+        steps_remaining: ""
+        ladder_exhausted: "{{ steps.extract_exhausted.output.message }}"
+        recommended_next_action: "{{ steps.assess_ladder.output.message }}"
+        final_offer_issued: "{{ steps.extract_offer.output.message }}"
+        final_offer_text: "Offer 10% off next Amazon Fire TV purchase — all troubleshooting steps exhausted and unit is out of warranty."
+        last_updated: "{{ execution.startedAt }}"
+        source_episode_ids: "{{ steps.search_episodes.output.hits.total.value }}"
+        memory_source: "workflow_remediation"
+        workflow_execution_id: "{{ execution.id }}"

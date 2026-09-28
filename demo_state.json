@@ -1,0 +1,213 @@
+{
+  "conversations": [
+    {
+      "conversation_id": "ac1c22e7-8956-4e3b-a451-2fc38f23f7de",
+      "user_id": "alice_chen",
+      "user_name": "Alice Chen",
+      "convo_index": 1
+    },
+    {
+      "conversation_id": "2969fd97-f204-49c9-9ddb-06e595a75178",
+      "user_id": "alice_chen",
+      "user_name": "Alice Chen",
+      "convo_index": 2
+    },
+    {
+      "conversation_id": "bf7e8929-f4f2-4d6f-a011-bab94fc9e261",
+      "user_id": "alice_chen",
+      "user_name": "Alice Chen",
+      "convo_index": 3
+    },
+    {
+      "conversation_id": "a29926fa-8f0a-452f-82bc-d14ecdaa50cd",
+      "user_id": "bob_smith",
+      "user_name": "Bob Smith",
+      "convo_index": 1
+    },
+    {
+      "conversation_id": "18e65d52-af5b-46bd-b782-e2c0dd8bd19a",
+      "user_id": "bob_smith",
+      "user_name": "Bob Smith",
+      "convo_index": 2
+    },
+    {
+      "conversation_id": "7c8bdd16-838b-44aa-a785-2f3e424163fd",
+      "user_id": "bob_smith",
+      "user_name": "Bob Smith",
+      "convo_index": 3
+    },
+    {
+      "conversation_id": "9b32c4dc-419f-4f94-96a8-0602da3e47cb",
+      "user_id": "carol_johnson",
+      "user_name": "Carol Johnson",
+      "convo_index": 1
+    },
+    {
+      "conversation_id": "cf434466-4f1c-47f5-9d99-6622075e5405",
+      "user_id": "carol_johnson",
+      "user_name": "Carol Johnson",
+      "convo_index": 2
+    },
+    {
+      "conversation_id": "1cb2c716-e89a-46b7-b88b-be2202b4200f",
+      "user_id": "carol_johnson",
+      "user_name": "Carol Johnson",
+      "convo_index": 3
+    }
+  ],
+  "workflows": [
+    {
+      "type": "episodic",
+      "conversation_id": "ac1c22e7-8956-4e3b-a451-2fc38f23f7de",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "episodic",
+      "conversation_id": "2969fd97-f204-49c9-9ddb-06e595a75178",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "episodic",
+      "conversation_id": "bf7e8929-f4f2-4d6f-a011-bab94fc9e261",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "episodic",
+      "conversation_id": "a29926fa-8f0a-452f-82bc-d14ecdaa50cd",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "episodic",
+      "conversation_id": "18e65d52-af5b-46bd-b782-e2c0dd8bd19a",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "episodic",
+      "conversation_id": "7c8bdd16-838b-44aa-a785-2f3e424163fd",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "episodic",
+      "conversation_id": "9b32c4dc-419f-4f94-96a8-0602da3e47cb",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "episodic",
+      "conversation_id": "cf434466-4f1c-47f5-9d99-6622075e5405",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "episodic",
+      "conversation_id": "1cb2c716-e89a-46b7-b88b-be2202b4200f",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "semantic",
+      "user_id": "alice_chen",
+      "entity_name": "vector_search",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "semantic",
+      "user_id": "alice_chen",
+      "entity_name": "serverless_pricing",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "semantic",
+      "user_id": "alice_chen",
+      "entity_name": "python_client",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "semantic",
+      "user_id": "bob_smith",
+      "entity_name": "solr_migration",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "semantic",
+      "user_id": "bob_smith",
+      "entity_name": "cluster_architecture",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "semantic",
+      "user_id": "bob_smith",
+      "entity_name": "monitoring_alerting",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "semantic",
+      "user_id": "carol_johnson",
+      "entity_name": "competitive_analysis",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "semantic",
+      "user_id": "carol_johnson",
+      "entity_name": "cost_estimation",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "semantic",
+      "user_id": "carol_johnson",
+      "entity_name": "elser_semantic_search",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "procedural",
+      "user_id": "alice_chen",
+      "procedure_context": "knn_benchmarking",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "procedural",
+      "user_id": "alice_chen",
+      "procedure_context": "serverless_cost_estimation",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "procedural",
+      "user_id": "alice_chen",
+      "procedure_context": "python_bulk_indexing",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "procedural",
+      "user_id": "bob_smith",
+      "procedure_context": "solr_to_elasticsearch_migration",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "procedural",
+      "user_id": "bob_smith",
+      "procedure_context": "cluster_sizing_and_architecture",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "procedural",
+      "user_id": "bob_smith",
+      "procedure_context": "slow_query_debugging",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "procedural",
+      "user_id": "carol_johnson",
+      "procedure_context": "vendor_evaluation",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "procedural",
+      "user_id": "carol_johnson",
+      "procedure_context": "tco_calculation",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "procedural",
+      "user_id": "carol_johnson",
+      "procedure_context": "hybrid_search_setup",
+      "execution_id": "unknown"
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+version: "1"
+name: generate_semantic_memory
+description: >
+  Distills semantic memory for a user. Looks up existing memory by user_id + entity_name.
+  If found, merges new facts with existing knowledge. Otherwise creates a new memory doc.
+  The 'facts' field auto-embeds via semantic_text at index time (no ingest pipeline needed).
+enabled: true
+tags: ["memory", "semantic", "agent-memory-demo"]
+
+inputs:
+  - name: user_id
+    type: string
+    required: true
+    description: "User identifier (e.g. alice_chen)"
+  - name: user_name
+    type: string
+    required: false
+    default: "Unknown User"
+    description: "Display name for the user"
+  - name: entity_name
+    type: string
+    required: true
+    description: "Entity/topic slug with underscores (e.g. 'vector_search')"
+  - name: entity_type
+    type: string
+    required: false
+    default: "concept"
+    description: "Type: concept, product, person, or organization"
+
+triggers:
+  - type: manual
+
+steps:
+  # Step 1: Fetch episodic memories for this user
+  - name: search_episodes
+    type: elasticsearch.request
+    with:
+      method: POST
+      path: /episodic_memory/_search
+      body:
+        query:
+          term:
+            user_id: "{{ inputs.user_id }}"
+        size: 10
+        _source:
+          - summary
+          - topic
+          - key_entities
+
+  # Step 2: Synthesize new facts from episodes
+  - name: synthesize_facts
+    type: ai.agent
+    agent-id: "elastic-ai-agent"
+    with:
+      message: |
+        You are a memory distillation system. Synthesize what a user knows and needs about a specific topic from their conversation history.
+
+        User: {{ inputs.user_name }} ({{ inputs.user_id }})
+        Topic to analyze: {{ inputs.entity_name }}
+
+        Their conversation summaries:
+        {% for hit in steps.search_episodes.output.hits.hits %}
+        - Topic: {{ hit._source.topic }}
+          Summary: {{ hit._source.summary }}
+        {% endfor %}
+
+        Write 3-5 factual sentences summarizing what this user knows and needs regarding "{{ inputs.entity_name }}".
+        Write ONLY the factual sentences — no labels, no JSON, no bullet points, no markdown.
+
+  # Step 3: Look up existing semantic memory for this user + entity
+  - name: find_existing_memory
+    type: elasticsearch.request
+    with:
+      method: POST
+      path: /semantic_memory/_search
+      body:
+        query:
+          term:
+            entity_id: "{{ inputs.user_id }}_{{ inputs.entity_name }}"
+        size: 1
+
+  # Step 4: Merge with existing facts if found, otherwise use synthesized facts
+  - name: merge_or_create
+    type: ai.agent
+    agent-id: "elastic-ai-agent"
+    with:
+      message: |
+        {% if steps.find_existing_memory.output.hits.hits %}
+        You are merging two knowledge summaries about the same topic for the same user.
+
+        Existing knowledge about "{{ steps.find_existing_memory.output.hits.hits[0]._source.entity_name }}":
+        {{ steps.find_existing_memory.output.hits.hits[0]._source.facts }}
+
+        New information synthesized from recent conversations about "{{ inputs.entity_name }}":
+        {{ steps.synthesize_facts.output.message }}
+
+        Write 3-5 updated factual sentences that merge both sources into a single coherent summary. Keep all important details from both.
+        Write ONLY the sentences — no labels, no JSON, no bullet points, no markdown.
+        {% else %}
+        {{ steps.synthesize_facts.output.message }}
+        {% endif %}
+
+  # Step 5: Index — PUT to fixed doc ID (creates or overwrites)
+  - name: index_semantic_memory
+    type: elasticsearch.request
+    with:
+      method: PUT
+      path: /semantic_memory/_doc/{{ inputs.user_id }}_{{ inputs.entity_name }}
+      body:
+        entity_id: "{{ inputs.user_id }}_{{ inputs.entity_name }}"
+        entity_name: "{{ inputs.entity_name }}"
+        entity_type: "{{ inputs.entity_type }}"
+        user_id: "{{ inputs.user_id }}"
+        user_name: "{{ inputs.user_name }}"
+        facts: "{{ steps.merge_or_create.output.message }}"
+        last_updated: "{{ execution.startedAt }}"
+        confidence_score: 0.85
+        total_episodes_analyzed: "{{ steps.search_episodes.output.hits.total.value }}"
+        memory_source: "workflow_merge"
+        workflow_execution_id: "{{ execution.id }}"

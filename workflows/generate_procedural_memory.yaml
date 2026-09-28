@@ -1,0 +1,89 @@
+version: "1"
+name: generate_procedural_memory
+description: >
+  Extracts reusable step-by-step procedures from a user's episodic conversation history.
+  Analyzes conversation patterns to synthesize an optimal action sequence for a given problem type.
+  Indexes with procedural-embed-pipeline for kNN search across all procedural memories.
+enabled: true
+tags: ["memory", "procedural", "agent-memory-demo"]
+
+inputs:
+  - name: user_id
+    type: string
+    required: true
+    description: "User identifier (e.g. alice_chen)"
+  - name: user_name
+    type: string
+    required: false
+    default: "Unknown User"
+    description: "Display name for the user"
+  - name: procedure_context
+    type: string
+    required: true
+    description: "Problem type slug with underscores (e.g. 'knn_benchmarking')"
+
+triggers:
+  - type: manual
+
+steps:
+  # Step 1: Search episodic memories for this user
+  - name: search_episodes
+    type: elasticsearch.request
+    with:
+      method: POST
+      path: /episodic_memory/_search
+      body:
+        query:
+          term:
+            user_id: "{{ inputs.user_id }}"
+        size: 10
+        _source:
+          - summary
+          - topic
+          - key_entities
+
+  # Step 2: AI agent extracts a reusable step-by-step procedure
+  - name: extract_procedure
+    type: ai.agent
+    agent-id: "elastic-ai-agent"
+    with:
+      message: |
+        You are a procedural memory extraction system. Analyze a user's conversation history and extract a reusable step-by-step procedure they can follow for future similar problems.
+
+        User: {{ inputs.user_name }}
+        Problem type to build a procedure for: {{ inputs.procedure_context }}
+
+        Their conversation history:
+        {% for hit in steps.search_episodes.output.hits.hits %}
+        - Topic: {{ hit._source.topic }}
+          Summary: {{ hit._source.summary }}
+        {% endfor %}
+
+        Based on these conversations, extract a clear, reusable procedure (4-6 numbered steps) that this user can follow when they encounter {{ inputs.procedure_context }} problems again. Make steps concrete and actionable.
+
+        Format your response EXACTLY as follows (no other text before or after):
+        PROCEDURE_NAME: [Short descriptive name, 3-6 words]
+        TRIGGER: [One sentence: exactly when to apply this procedure]
+        STEPS:
+        1. [First actionable step]
+        2. [Second actionable step]
+        3. [Third actionable step]
+        4. [Fourth actionable step]
+        5. [Optional fifth step]
+
+  # Step 3: Index procedural memory — procedural-embed-pipeline auto-generates procedure_vector
+  - name: index_procedural_memory
+    type: elasticsearch.request
+    with:
+      method: PUT
+      path: /procedural_memory/_doc/{{ inputs.user_id }}_{{ inputs.procedure_context }}
+      body:
+        procedure_id: "{{ inputs.user_id }}_{{ inputs.procedure_context }}"
+        user_id: "{{ inputs.user_id }}"
+        user_name: "{{ inputs.user_name }}"
+        procedure_context: "{{ inputs.procedure_context }}"
+        procedure_text: "{{ steps.extract_procedure.output.message }}"
+        last_refined: "{{ execution.startedAt }}"
+        created_from_episodes: "{{ steps.search_episodes.output.hits.total.value }}"
+        memory_source: "workflow_extraction"
+        workflow_execution_id: "{{ execution.id }}"

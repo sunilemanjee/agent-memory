@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fire TV Support Memory Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #FF9900;
+            --accent: #00BFB3;
+            --dark-bg: #1a1a2e;
+            --card-bg: #16213e;
+            --border: #2d3561;
+            --text-primary: #e8e8e8;
+            --text-secondary: #a0a0a0;
+            --success: #34d399;
+            --warning: #fbbf24;
+            --error: #f87171;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--dark-bg); color: var(--text-primary); line-height: 1.6; }
+
+        .header { background-color: var(--card-bg); border-bottom: 1px solid var(--border); padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .header-left h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .header-left p { font-size: 0.875rem; color: var(--text-secondary); }
+        .status-indicator { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; }
+        .status-dot { width: 8px; height: 8px; background-color: var(--success); border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        .tabs-container { display: flex; gap: 0; border-bottom: 1px solid var(--border); background-color: var(--card-bg); padding: 0 2rem; overflow-x: auto; }
+        .tab-button { flex: 1; padding: 1rem; background: none; border: none; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s ease; font-family: 'Inter', sans-serif; white-space: nowrap; }
+        .tab-button:hover { color: var(--text-primary); }
+        .tab-button.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        .content { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; }
+        .stat-card .number { font-size: 1.75rem; font-weight: 700; color: var(--accent); }
+        .stat-card .label { font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.5rem; }
+
+        .filter-bar { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; align-items: center; }
+        .filter-group { display: flex; gap: 0.5rem; align-items: center; }
+        .filter-group label { font-size: 0.875rem; color: var(--text-secondary); font-weight: 500; }
+        select { background-color: var(--card-bg); border: 1px solid var(--border); color: var(--text-primary); padding: 0.5rem 0.75rem; border-radius: 4px; font-family: 'Inter', sans-serif; cursor: pointer; }
+        select:hover { border-color: var(--primary); }
+
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; }
+        .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; transition: all 0.3s ease; }
+        .card:hover { border-color: var(--primary); box-shadow: 0 8px 16px rgba(255, 153, 0, 0.1); }
+
+        .card-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: white; font-size: 0.875rem; }
+        .avatar.jordan { background-color: #FF6B35; }
+        .avatar.morgan { background-color: #20B2AA; }
+        .avatar.priya  { background-color: #7B68EE; }
+
+        .card-header-info { flex: 1; }
+        .card-header-info .name { font-weight: 600; font-size: 0.95rem; }
+        .card-header-info .date { font-size: 0.875rem; color: var(--text-secondary); }
+
+        .topic-badge { display: inline-block; padding: 0.25rem 0.75rem; background-color: rgba(255, 153, 0, 0.2); color: var(--primary); border-radius: 20px; font-size: 0.75rem; font-weight: 500; }
+        .similarity-badge { display: inline-block; padding: 0.25rem 0.75rem; background-color: rgba(0, 191, 179, 0.2); color: var(--accent); border-radius: 20px; font-size: 0.75rem; font-weight: 500; }
+        .score-pill { display: inline-flex; align-items: center; justify-content: center; min-width: 3.2rem; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; flex-shrink: 0; }
+        .score-pill.high   { background: rgba(74,222,128,0.18); color: #4ade80; }
+        .score-pill.medium { background: rgba(251,191,36,0.18); color: #fbbf24; }
+        .score-pill.low    { background: rgba(248,113,113,0.18); color: #f87171; }
+
+        .comp-controls { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+        .comp-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+        .comp-panel { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .comp-without { border-top: 3px solid #f87171; }
+        .comp-with    { border-top: 3px solid #4ade80; }
+        .comp-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+        .comp-badge { font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 4px; }
+        .without-badge { background: rgba(248,113,113,0.15); color: #f87171; }
+        .with-badge    { background: rgba(74,222,128,0.15); color: #4ade80; }
+        .comp-response { padding: 1rem; font-size: 0.875rem; line-height: 1.6; color: var(--text-primary); min-height: 120px; white-space: pre-wrap; }
+        .comp-loading  { color: var(--text-secondary); font-style: italic; }
+        .comp-memory-pill { font-size: 0.7rem; background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); border-radius: 4px; padding: 0.2rem 0.5rem; }
+        @media (max-width: 768px) { .comp-panels { grid-template-columns: 1fr; } }
+
+        .card-body { margin-bottom: 1rem; }
+        .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .card-summary { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1rem; }
+        .entity-type-badge { display: inline-block; padding: 0.25rem 0.75rem; background-color: rgba(0, 191, 179, 0.15); color: var(--accent); border-radius: 20px; font-size: 0.75rem; font-weight: 500; margin-bottom: 1rem; }
+        .facts-text { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1rem; }
+        .source-badge { display: inline-block; padding: 0.25rem 0.75rem; background-color: rgba(255, 193, 7, 0.15); color: #fbbf24; border-radius: 20px; font-size: 0.75rem; font-weight: 500; }
+
+        .tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+        .tag { display: inline-block; padding: 0.25rem 0.75rem; background-color: rgba(160, 160, 160, 0.15); color: var(--text-secondary); border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
+
+        .card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.875rem; }
+        .footer-section { display: flex; gap: 1rem; align-items: center; }
+        .score-item { display: flex; align-items: center; gap: 0.25rem; }
+        .stars { color: var(--warning); }
+        .valence-icon { font-size: 1.25rem; }
+
+        .progress-bar { width: 100%; height: 6px; background-color: rgba(160, 160, 160, 0.2); border-radius: 3px; overflow: hidden; margin-bottom: 0.5rem; }
+        .progress-fill { height: 100%; background-color: var(--accent); transition: width 0.3s ease; }
+        .progress-label { display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 0.5rem; }
+
+        .search-container { margin-bottom: 2rem; }
+        .search-input-wrapper { display: flex; gap: 1rem; margin-bottom: 1rem; }
+        input[type="text"], textarea { flex: 1; padding: 0.75rem 1rem; background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-family: 'Inter', sans-serif; font-size: 0.95rem; }
+        input[type="text"]:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(255, 153, 0, 0.1); }
+        textarea { resize: vertical; min-height: 100px; }
+
+        .radio-group { display: flex; gap: 1.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .radio-item { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+        input[type="radio"] { cursor: pointer; }
+
+        .button { padding: 0.75rem 1.5rem; background-color: var(--primary); color: white; border: none; border-radius: 4px; font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.3s ease; font-size: 0.95rem; }
+        .button:hover { background-color: #cc7a00; }
+        .button:active { transform: scale(0.98); }
+
+        .recall-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .control-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .control-group label { font-weight: 500; font-size: 0.95rem; }
+        .recall-results { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+        .recall-column { display: flex; flex-direction: column; gap: 1rem; }
+        .recall-column h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .recall-results-grid { display: flex; flex-direction: column; gap: 1rem; }
+
+        .context-window { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-top: 1rem; }
+        .context-window h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 1rem; color: var(--accent); font-family: 'Courier New', monospace; }
+        .context-window pre { background-color: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.85rem; line-height: 1.6; font-family: 'Courier New', monospace; color: #d4af37; }
+
+        .section-header { font-size: 1.1rem; font-weight: 600; margin-top: 2rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--border); }
+
+        .loading { display: flex; align-items: center; justify-content: center; gap: 0.5rem; color: var(--text-secondary); padding: 2rem; }
+        .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .error-banner { background-color: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; color: #fca5a5; display: none; }
+        .error-banner.show { display: block; }
+
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 1rem; text-align: center; }
+            .tabs-container { padding: 0 1rem; }
+            .tab-button { padding: 0.75rem 0.5rem; font-size: 0.85rem; }
+            .content { padding: 1rem; }
+            .cards-grid { grid-template-columns: 1fr; }
+            .recall-results { grid-template-columns: 1fr; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+            .filter-group { flex-direction: column; }
+            select { width: 100%; }
+        }
+
+        /* Chat Tab */
+        .chat-layout { display: flex; gap: 1.5rem; height: 600px; }
+        .chat-sidebar { width: 220px; flex-shrink: 0; display: flex; flex-direction: column; gap: 1.25rem; }
+        .sidebar-section label { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.4rem; }
+        .sidebar-section select { width: 100%; }
+        .conv-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.4rem; }
+        .conv-id { font-size: 0.7rem; color: var(--text-secondary); word-break: break-all; font-family: monospace; }
+        .save-memory-btn { width: 100%; background: linear-gradient(135deg, #FF9900, #f7c59f); color: #1a1a2e; font-weight: 700; border: none; }
+        .save-memory-btn:disabled { opacity: 0.4; cursor: not-allowed; background: var(--card-bg); color: var(--text-secondary); }
+        .workflow-status { font-size: 0.78rem; color: var(--text-secondary); min-height: 1.2rem; line-height: 1.4; }
+        .workflow-status.success { color: #4ade80; }
+        .workflow-status.error   { color: #f87171; }
+
+        .refresh-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 0.8rem; padding: 0.3rem 0.7rem; margin-left: auto; transition: border-color 0.15s, color 0.15s; }
+        .refresh-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+        .workflow-executions { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+        .wf-status-icon { display: inline-block; width: 1em; text-align: center; }
+        .wf-status-icon.spinning { animation: spin 1s linear infinite; }
+        .workflow-execution-item { font-size: 0.75rem; display: flex; align-items: center; gap: 6px; }
+        .workflow-execution-item a { color: #60a5fa; text-decoration: none; }
+        .workflow-execution-item a:hover { text-decoration: underline; }
+
+        .chat-main { flex: 1; display: flex; flex-direction: column; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+        .chat-empty { color: var(--text-secondary); text-align: center; margin: auto; line-height: 1.6; font-size: 0.9rem; }
+        .chat-bubble { max-width: 80%; padding: 0.75rem 1rem; border-radius: 12px; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; }
+        .chat-bubble.user { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
+        .chat-bubble.agent { align-self: flex-start; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+        .chat-bubble.thinking { align-self: flex-start; color: var(--text-secondary); font-style: italic; background: none; border: none; padding-left: 0; }
+        .chat-bubble-question { border: 1px solid #fbbf24; background: rgba(251,191,36,0.08); }
+        .chat-question-label { font-weight: 600; color: #fbbf24; margin-bottom: 0.5rem; font-size: 0.8rem; }
+        .chat-question-text { margin: 0.4rem 0 0.4rem; }
+        .chat-question-options { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .chat-option-btn { font-size: 0.8rem; padding: 0.4rem 0.75rem; border-radius: 6px; border: 1px solid #fbbf24; background: rgba(251,191,36,0.12); color: var(--text-primary); cursor: pointer; }
+        .chat-option-btn:hover:not(:disabled) { background: rgba(251,191,36,0.25); }
+        .chat-option-btn:disabled { opacity: 0.5; cursor: default; }
+        .chat-option-btn.chosen { background: #fbbf24; color: #1a1a1a; opacity: 1; font-weight: 600; }
+        .chat-submit-btn { border-color: var(--accent); background: var(--accent); color: white; }
+        .chat-submit-btn:disabled { background: rgba(255,255,255,0.06); border-color: var(--border); color: var(--text-secondary); opacity: 1; }
+        .chat-suggestions { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem 1rem 0; border-top: 1px solid var(--border); }
+        .chat-suggestion-chip { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; color: var(--text-secondary); cursor: pointer; font-size: 0.75rem; padding: 0.35rem 0.75rem; transition: border-color 0.15s, color 0.15s; text-align: left; }
+        .chat-suggestion-chip:hover { border-color: var(--accent); color: var(--text-primary); }
+        .chat-input-row { display: flex; gap: 0.75rem; padding: 0.75rem 1rem 1rem; }
+        .chat-input-row input { flex: 1; background: var(--dark-bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); padding: 0.6rem 0.9rem; font-size: 0.9rem; outline: none; }
+        .chat-input-row input:focus { border-color: var(--accent); }
+
+        /* Architecture Tab */
+        .arch-page { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; display: flex; flex-direction: column; gap: 2rem; }
+        .arch-intro { text-align: center; }
+        .arch-flow { display: flex; flex-direction: column; align-items: center; gap: 0; }
+        .arch-node { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 1rem 2rem; border-radius: 12px; border: 1px solid var(--border); background: var(--card-bg); text-align: center; min-width: 220px; }
+        .arch-trigger { border-color: #60a5fa; }
+        .arch-inject  { border-color: var(--accent); }
+        .arch-node-icon { font-size: 1.8rem; }
+        .arch-node-label { font-weight: 700; font-size: 1rem; }
+        .arch-node-sub { font-size: 0.78rem; color: var(--text-secondary); }
+        .arch-arrow-down { padding: 0.6rem 0; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; font-size: 1.4rem; color: var(--text-secondary); }
+        .arch-arrow-down span { font-size: 0.72rem; letter-spacing: 0.05em; color: var(--accent); font-weight: 600; text-transform: uppercase; }
+        .arch-workflows-row { display: flex; gap: 1rem; width: 100%; justify-content: center; flex-wrap: wrap; }
+        .arch-wf-card { flex: 1; max-width: 280px; min-width: 220px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); padding: 1rem 1.2rem; }
+        .arch-wf-episodic   { border-color: #f59e0b; }
+        .arch-wf-semantic   { border-color: #a78bfa; }
+        .arch-wf-procedural { border-color: #34d399; }
+        .arch-wf-remediation { border-color: #f87171; }
+        .arch-wf-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.6rem; }
+        .arch-wf-steps { margin: 0 0 0.8rem 1.1rem; padding: 0; font-size: 0.78rem; color: var(--text-secondary); line-height: 1.7; }
+        .arch-wf-steps code { background: rgba(255,255,255,0.07); padding: 0.1rem 0.3rem; border-radius: 4px; font-size: 0.75rem; color: var(--accent); }
+        .arch-wf-embed { font-size: 0.72rem; color: var(--accent); border-top: 1px solid var(--border); padding-top: 0.5rem; margin-top: 0.2rem; }
+        .arch-recall-row { display: flex; gap: 1rem; justify-content: center; width: 100%; flex-wrap: wrap; }
+        .arch-recall-card { flex: 1; max-width: 200px; text-align: center; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); padding: 1rem 0.8rem; }
+        .arch-recall-icon { font-size: 1.6rem; margin-bottom: 0.3rem; }
+        .arch-recall-label { font-weight: 700; font-size: 0.9rem; }
+        .arch-recall-sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem; }
+        .arch-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .arch-fact { display: flex; gap: 0.75rem; align-items: flex-start; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1rem; }
+        .arch-fact-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 0.1rem; }
+        .arch-fact strong { font-size: 0.88rem; }
+        .arch-fact span { font-size: 0.78rem; color: var(--text-secondary); }
+
+        /* Remediation Tracker Tab */
+        .rem-card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; }
+        .rem-card.exhausted-expired { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+        .rem-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+        .rem-title { font-size: 1.05rem; font-weight: 700; }
+        .rem-device { font-size: 0.8rem; color: var(--text-secondary); }
+        .warranty-badge { font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.7rem; border-radius: 20px; }
+        .warranty-badge.active  { background: rgba(74,222,128,0.15); color: #4ade80; }
+        .warranty-badge.expired { background: rgba(248,113,113,0.15); color: #f87171; }
+        .ladder-list { list-style: none; margin: 0.75rem 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+        .ladder-list li { font-size: 0.85rem; display: flex; gap: 0.5rem; align-items: flex-start; }
+        .ladder-list li.done { color: var(--text-secondary); text-decoration: line-through; }
+        .next-action { font-size: 0.85rem; background: rgba(255,255,255,0.05); border-radius: 6px; padding: 0.6rem 0.8rem; margin-top: 0.5rem; }
+        .offer-banner { margin-top: 1rem; background: linear-gradient(135deg, #FF9900, #ffb84d); color: #1a1a2e; border-radius: 8px; padding: 1rem; font-weight: 600; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <h1>📺 Fire TV Support Memory</h1>
+            <p>Episodic, Semantic, Procedural &amp; Remediation Memory Demo</p>
+        </div>
+        <div class="header-right" style="display:flex; align-items:center; gap:1rem;">
+            <div class="reset-controls" style="display:flex; align-items:center; gap:0.5rem;">
+                <select id="reset-user-select" style="padding:0.4rem 0.6rem; border-radius:6px; border:1px solid var(--border); background:var(--card-bg); color:var(--text-primary); font-size:0.85rem;">
+                    <option value="">All Users</option>
+                    <option value="jordan_price">Jordan Price</option>
+                    <option value="morgan_lee">Morgan Lee</option>
+                    <option value="priya_nair">Priya Nair</option>
+                </select>
+                <button onclick="resetDemo()" id="reset-btn" style="padding:0.4rem 0.9rem; background:#e53935; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem; font-weight:600;">↺ Reset Demo</button>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>Connected</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-container">
+        <button class="tab-button active" data-tab="architecture">🏗️ Architecture</button>
+        <button class="tab-button" data-tab="chat">💬 Live Chat</button>
+        <button class="tab-button" data-tab="episodic">📅 Episodic Memory</button>
+        <button class="tab-button" data-tab="semantic">🧠 Semantic Memory</button>
+        <button class="tab-button" data-tab="procedural">⚙️ Procedural Memory</button>
+        <button class="tab-button" data-tab="remediation">🛠️ Remediation Tracker</button>
+        <button class="tab-button" data-tab="search">🔍 Memory Search</button>
+        <button class="tab-button" data-tab="recall">🔎 Memory Recall</button>
+        <button class="tab-button" data-tab="comparison">🧪 Memory Demo</button>
+    </div>
+
+    <!-- Error Banner -->
+    <div class="error-banner" id="error-banner"></div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Tab: Architecture -->
+        <div class="tab-content active" id="architecture">
+            <div class="arch-page">
+                <div class="arch-intro">
+                    <h2 style="margin:0 0 0.4rem; font-size:1.3rem;">How Fire TV Support Memory Works</h2>
+                    <p style="margin:0; color:var(--text-secondary); font-size:0.92rem;">One conversation → four Kibana Workflows → four memory layers. All stored and retrieved natively in Elasticsearch.</p>
+                </div>
+
+                <div class="arch-flow">
+                    <div class="arch-node arch-trigger">
+                        <div class="arch-node-icon">💬</div>
+                        <div class="arch-node-label">Live Chat</div>
+                        <div class="arch-node-sub">Customer talks to the Fire TV Support Specialist</div>
+                    </div>
+                    <div class="arch-arrow-down">↓ <span>⚡ Save to Agent Memory</span></div>
+
+                    <div class="arch-workflows-row">
+                        <div class="arch-wf-card arch-wf-episodic">
+                            <div class="arch-wf-title">📅 Episodic Workflow</div>
+                            <ol class="arch-wf-steps">
+                                <li>Fetch conversation from Agent Builder API</li>
+                                <li>AI summarizes + extracts topics</li>
+                                <li>Index → <code>firetv_episodic_memory</code></li>
+                            </ol>
+                        </div>
+                        <div class="arch-wf-card arch-wf-semantic">
+                            <div class="arch-wf-title">🧠 Semantic Workflow</div>
+                            <ol class="arch-wf-steps">
+                                <li>Fetch user's episodes</li>
+                                <li>AI distills standing facts</li>
+                                <li>kNN merge-or-create</li>
+                                <li>Index → <code>firetv_semantic_memory</code></li>
+                            </ol>
+                        </div>
+                        <div class="arch-wf-card arch-wf-procedural">
+                            <div class="arch-wf-title">⚙️ Procedural Workflow</div>
+                            <ol class="arch-wf-steps">
+                                <li>Fetch user's episodes</li>
+                                <li>AI extracts personalized playbook</li>
+                                <li>Index → <code>firetv_procedural_memory</code></li>
+                            </ol>
+                        </div>
+                        <div class="arch-wf-card arch-wf-remediation">
+                            <div class="arch-wf-title">🛠️ Remediation Workflow</div>
+                            <ol class="arch-wf-steps">
+                                <li>Fetch episodes + canonical ladder + warranty</li>
+                                <li>AI tracks steps tried vs. remaining</li>
+                                <li>If ladder exhausted &amp; out of warranty → offer 10% off</li>
+                                <li>Index → <code>firetv_remediation_memory</code></li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="arch-arrow-down">↓ <span>Next conversation starts</span></div>
+
+                    <div class="arch-recall-row">
+                        <div class="arch-recall-card">
+                            <div class="arch-recall-icon">📅</div>
+                            <div class="arch-recall-label">Episodic</div>
+                            <div class="arch-recall-sub">What happened?</div>
+                        </div>
+                        <div class="arch-recall-card">
+                            <div class="arch-recall-icon">🧠</div>
+                            <div class="arch-recall-label">Semantic</div>
+                            <div class="arch-recall-sub">What's true?</div>
+                        </div>
+                        <div class="arch-recall-card">
+                            <div class="arch-recall-icon">⚙️</div>
+                            <div class="arch-recall-label">Procedural</div>
+                            <div class="arch-recall-sub">How to act?</div>
+                        </div>
+                        <div class="arch-recall-card">
+                            <div class="arch-recall-icon">🛠️</div>
+                            <div class="arch-recall-label">Remediation</div>
+                            <div class="arch-recall-sub">What's left to try?</div>
+                        </div>
+                    </div>
+
+                    <div class="arch-arrow-down">↓</div>
+                    <div class="arch-node arch-inject">
+                        <div class="arch-node-icon">🤖</div>
+                        <div class="arch-node-label">Agent Context Window</div>
+                        <div class="arch-node-sub">All four layers injected before the agent replies — never repeat a tried step</div>
+                    </div>
+                </div>
+
+                <div class="arch-facts">
+                    <div class="arch-fact">
+                        <span class="arch-fact-icon">🛠️</span>
+                        <div><strong>Remediation ladder tracking</strong><br><span>Agent always knows which troubleshooting steps already failed</span></div>
+                    </div>
+                    <div class="arch-fact">
+                        <span class="arch-fact-icon">🎁</span>
+                        <div><strong>Warranty-aware fallback</strong><br><span>Ladder exhausted + out of warranty → proactive 10% discount offer</span></div>
+                    </div>
+                    <div class="arch-fact">
+                        <span class="arch-fact-icon">🔍</span>
+                        <div><strong>semantic_text field</strong><br><span>Elasticsearch auto-embeds at index time — no ingest pipeline</span></div>
+                    </div>
+                    <div class="arch-fact">
+                        <span class="arch-fact-icon">🏗️</span>
+                        <div><strong>Pure Elastic</strong><br><span>No external vector DB, no custom embedding service</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Live Chat -->
+        <div class="tab-content" id="chat">
+            <div class="chat-layout">
+                <div class="chat-sidebar">
+                    <div class="sidebar-section">
+                        <label>Chatting as:</label>
+                        <select id="chat-user">
+                            <option value="jordan_price|Jordan Price" selected>Jordan Price</option>
+                            <option value="morgan_lee|Morgan Lee">Morgan Lee</option>
+                            <option value="priya_nair|Priya Nair">Priya Nair</option>
+                        </select>
+                    </div>
+                    <div class="sidebar-section" id="chat-conv-info" style="display:none;">
+                        <div class="conv-label">Current Conversation</div>
+                        <div class="conv-id" id="chat-conv-id-display"></div>
+                    </div>
+                    <div class="sidebar-section">
+                        <button class="button save-memory-btn" id="save-memory-btn" onclick="saveAsMemory()" disabled>
+                            ⚡ Save to Agent Memory
+                        </button>
+                        <div id="workflow-status" class="workflow-status"></div>
+                        <div id="workflow-executions" class="workflow-executions" style="display:none;"></div>
+                    </div>
+                    <div class="sidebar-section" style="font-size:0.8rem; color: var(--text-secondary); line-height:1.5;">
+                        After saving, switch to<br><strong>Episodic Memory</strong> tab<br>to see the new card appear.
+                    </div>
+                </div>
+                <div class="chat-main">
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="chat-empty">Start a conversation with the Fire TV Support Specialist.<br>Ask about power issues, remote pairing, streaming lag, or app crashes.</div>
+                    </div>
+                    <div class="chat-suggestions" id="chat-suggestions"></div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chat-input" placeholder="Describe the Fire TV issue..." onkeydown="if(event.key==='Enter' && !event.shiftKey){sendChat();event.preventDefault();}">
+                        <span id="chat-thinking-timer" style="display:none; font-size:0.75rem; color:var(--text-secondary); font-variant-numeric:tabular-nums; align-self:center;"></span>
+                        <button class="button" onclick="sendChat()" id="chat-send-btn">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Episodic Memory -->
+        <div class="tab-content" id="episodic">
+            <div class="stats-row">
+                <div class="stat-card"><div class="number" id="episodic-count">0</div><div class="label">Total Episodes</div></div>
+                <div class="stat-card"><div class="number" id="user-count">0</div><div class="label">Users</div></div>
+                <div class="stat-card"><div class="number" id="topic-count">0</div><div class="label">Topics</div></div>
+            </div>
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>User:</label>
+                    <select id="episodic-user-filter">
+                        <option value="">All</option>
+                        <option value="jordan_price">Jordan Price</option>
+                        <option value="morgan_lee">Morgan Lee</option>
+                        <option value="priya_nair">Priya Nair</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Valence:</label>
+                    <select id="episodic-valence-filter">
+                        <option value="">All</option>
+                        <option value="positive">Positive</option>
+                        <option value="neutral">Neutral</option>
+                        <option value="negative">Negative</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Sort:</label>
+                    <select id="episodic-sort">
+                        <option value="date-desc">Date ↓</option>
+                        <option value="date-asc">Date ↑</option>
+                        <option value="importance-desc">Importance ↓</option>
+                    </select>
+                </div>
+                <button class="refresh-btn" onclick="loadEpisodes()" title="Refresh">↻ Refresh</button>
+            </div>
+            <div class="cards-grid" id="episodic-cards"></div>
+        </div>
+
+        <!-- Tab: Semantic Memory -->
+        <div class="tab-content" id="semantic">
+            <div class="stats-row">
+                <div class="stat-card"><div class="number" id="semantic-count">0</div><div class="label">Entities</div></div>
+                <div class="stat-card"><div class="number" id="avg-confidence">0%</div><div class="label">Avg Confidence</div></div>
+            </div>
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>User:</label>
+                    <select id="semantic-user-filter">
+                        <option value="">All</option>
+                        <option value="jordan_price">Jordan Price</option>
+                        <option value="morgan_lee">Morgan Lee</option>
+                        <option value="priya_nair">Priya Nair</option>
+                    </select>
+                </div>
+                <button class="refresh-btn" onclick="loadSemantic()" title="Refresh">↻ Refresh</button>
+            </div>
+            <div id="semantic-content"></div>
+        </div>
+
+        <!-- Tab: Procedural Memory -->
+        <div class="tab-content" id="procedural">
+            <div class="stats-row">
+                <div class="stat-card"><div class="number" id="procedural-count">0</div><div class="label">Procedures</div></div>
+                <div class="stat-card"><div class="number" id="procedural-user-count">0</div><div class="label">Users</div></div>
+            </div>
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>User:</label>
+                    <select id="procedural-user-filter">
+                        <option value="">All</option>
+                        <option value="jordan_price">Jordan Price</option>
+                        <option value="morgan_lee">Morgan Lee</option>
+                        <option value="priya_nair">Priya Nair</option>
+                    </select>
+                </div>
+                <button class="refresh-btn" onclick="loadProcedural()" title="Refresh">↻ Refresh</button>
+            </div>
+            <div id="procedural-content"></div>
+        </div>
+
+        <!-- Tab: Remediation Tracker -->
+        <div class="tab-content" id="remediation">
+            <div class="stats-row">
+                <div class="stat-card"><div class="number" id="remediation-count">0</div><div class="label">Active Ladders</div></div>
+                <div class="stat-card"><div class="number" id="remediation-offers">0</div><div class="label">Discount Offers Issued</div></div>
+            </div>
+            <div class="filter-bar">
+                <button class="refresh-btn" onclick="loadRemediation()" title="Refresh">↻ Refresh</button>
+            </div>
+            <div class="cards-grid" id="remediation-cards"></div>
+        </div>
+
+        <!-- Tab: Memory Search -->
+        <div class="tab-content" id="search">
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search agent memory... (e.g., 'power failure', 'remote pairing')" style="width: 100%; padding: 1rem;">
+                <div class="chat-suggestions" style="border-top: none; padding: 0.5rem 0 0;">
+                    <button class="chat-suggestion-chip" onclick="document.getElementById('search-input').value=this.textContent.trim(); searchMemory();">power won't turn on</button>
+                    <button class="chat-suggestion-chip" onclick="document.getElementById('search-input').value=this.textContent.trim(); searchMemory();">app crashing on Fire TV</button>
+                </div>
+                <div class="radio-group">
+                    <label><input type="radio" name="memory-type" value="both" checked> Both</label>
+                    <label><input type="radio" name="memory-type" value="episodic"> Episodic only</label>
+                    <label><input type="radio" name="memory-type" value="semantic"> Semantic only</label>
+                </div>
+                <button class="button" onclick="searchMemory()">Search</button>
+            </div>
+            <div id="search-results"></div>
+        </div>
+
+        <!-- Tab: Memory Recall -->
+        <div class="tab-content" id="recall">
+            <div class="recall-controls">
+                <div class="control-group">
+                    <label>User:</label>
+                    <select id="recall-user">
+                        <option value="jordan_price" selected>Jordan Price</option>
+                        <option value="morgan_lee">Morgan Lee</option>
+                        <option value="priya_nair">Priya Nair</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Conversation Context:</label>
+                    <textarea id="recall-context" placeholder="It still won't turn on..."></textarea>
+                    <div class="chat-suggestions" style="margin-top:0.5rem; margin-bottom:0;">
+                        <button class="chat-suggestion-chip" onclick="document.getElementById('recall-context').value=this.textContent.trim(); recallMemory();">It still won't power on after everything we tried</button>
+                    </div>
+                </div>
+            </div>
+            <button class="button" onclick="recallMemory()">Recall Memories</button>
+            <div id="recall-results"></div>
+        </div>
+
+        <!-- Tab: Memory Comparison Demo -->
+        <div class="tab-content" id="comparison">
+            <div style="margin-bottom:1.5rem;">
+                <h2 style="margin:0 0 0.25rem; font-size:1.1rem;">🧪 Memory Comparison</h2>
+                <p style="margin:0; color:var(--text-secondary); font-size:0.875rem;">Ask the same question with and without memory injection. See whether the agent proactively surfaces the discount instead of repeating troubleshooting.</p>
+            </div>
+
+            <div class="comp-controls">
+                <div class="control-group">
+                    <label>User:</label>
+                    <select id="comp-user">
+                        <option value="jordan_price|Jordan Price" selected>Jordan Price</option>
+                        <option value="morgan_lee|Morgan Lee">Morgan Lee</option>
+                        <option value="priya_nair|Priya Nair">Priya Nair</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Question:</label>
+                    <input type="text" id="comp-question" style="width:100%;padding:0.5rem;background:var(--dark-bg);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:0.875rem;" value="I already tried everything you told me — it still doesn't work. What now?">
+                </div>
+                <div style="margin-top:0.5rem;">
+                    <p style="margin:0 0 0.5rem; font-size:0.8rem; color:var(--text-secondary);">Or try a suggested question:</p>
+                    <div class="chat-suggestions" style="margin-bottom:0;">
+                        <button class="chat-suggestion-chip" onclick="setCompQuestion(this)">I already tried everything you told me — it still doesn't work. What now?</button>
+                        <button class="chat-suggestion-chip" onclick="setCompQuestion(this)">Can you remind me what troubleshooting steps I've already done?</button>
+                    </div>
+                </div>
+                <div style="margin-top:0.5rem; display:flex; align-items:center; gap:1.25rem; flex-wrap:wrap;">
+                    <span style="font-size:0.8rem; color:var(--text-secondary); font-weight:600;">Inject memory types:</span>
+                    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.8rem;cursor:pointer;"><input type="checkbox" id="comp-mem-semantic" checked> 🧠 Semantic</label>
+                    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.8rem;cursor:pointer;"><input type="checkbox" id="comp-mem-episodic"> 📅 Episodic</label>
+                    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.8rem;cursor:pointer;"><input type="checkbox" id="comp-mem-procedural"> ⚙️ Procedural</label>
+                    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.8rem;cursor:pointer;"><input type="checkbox" id="comp-mem-remediation" checked> 🛠️ Remediation</label>
+                </div>
+            </div>
+
+            <button class="button" id="comp-run-btn" onclick="runComparison()" style="margin-bottom:1.5rem;">⚡ Run Comparison</button>
+
+            <div id="comp-status" style="display:none; margin-bottom:1rem; font-size:0.875rem; color:var(--text-secondary); font-style:italic;"></div>
+
+            <div class="comp-panels" id="comp-panels" style="display:none;">
+                <div class="comp-panel comp-without">
+                    <div class="comp-panel-header">
+                        <span class="comp-badge without-badge">🚫 Without Memory</span>
+                        <span id="comp-without-timer" style="font-size:0.75rem; color:var(--text-secondary); font-variant-numeric:tabular-nums;"></span>
+                    </div>
+                    <div class="comp-response" id="comp-without-response"><div class="comp-loading">Asking agent...</div></div>
+                    <div class="comp-meta" id="comp-without-meta" style="display:none; padding:0.5rem 1rem; border-top:1px solid var(--border); font-size:0.72rem; color:var(--text-secondary); gap:1rem; flex-wrap:wrap;"></div>
+                </div>
+                <div class="comp-panel comp-with">
+                    <div class="comp-panel-header">
+                        <span class="comp-badge with-badge">🧠 With Memory</span>
+                        <span id="comp-with-timer" style="font-size:0.75rem; color:var(--text-secondary); font-variant-numeric:tabular-nums;"></span>
+                    </div>
+                    <div class="comp-response" id="comp-with-response"><div class="comp-loading">Recalling memories and asking agent...</div></div>
+                    <div class="comp-meta" id="comp-with-meta" style="display:none; padding:0.5rem 1rem; border-top:1px solid var(--border); font-size:0.72rem; color:var(--text-secondary); gap:1rem; flex-wrap:wrap;"></div>
+                    <div id="comp-memory-detail" style="display:none; padding:0.75rem 1rem; border-top:1px solid var(--border);">
+                        <p style="margin:0 0 0.5rem; font-size:0.75rem; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.05em;">Injected Memory Context</p>
+                        <div id="comp-memory-pills" style="display:flex; flex-wrap:wrap; gap:0.4rem;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const KB_URL = {{ kb_url | tojson }};
+        const AGENT_ID = {{ agent_id | tojson }};
+        const SEED_CONV_ID = {{ seed_conv_id | tojson }};
+        const LIVE_CHAT_SCRIPT = [
+            "my fire tv still won't turn on.",
+            "i've tried a different outlet and a factory reset",
+            "i've tried that",
+        ];
+
+        let episodic_data = [];
+        let semantic_data = [];
+        let procedural_data = [];
+        let remediation_data = [];
+        let chat_conversation_id = null;
+        let chat_round_index = 0;
+
+        const CHAT_STORAGE_KEY = 'firetv_chat_session';
+
+        function isTrue(v) { return v === true || v === 'true'; }
+
+        function displayUser(item) {
+            return item.user_name || (item.user_id || '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        }
+        function avatarClass(item) {
+            return displayUser(item).split(' ')[0].toLowerCase();
+        }
+        function initials(item) {
+            return displayUser(item).split(' ').map(n => n[0]).join('');
+        }
+
+        function showError(message) {
+            const banner = document.getElementById('error-banner');
+            banner.textContent = message;
+            banner.classList.add('show');
+            setTimeout(() => banner.classList.remove('show'), 5000);
+        }
+
+        // ── Tab switching ──────────────────────────────────────────
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.getAttribute('data-tab');
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(tab).classList.add('active');
+            });
+        });
+
+        document.getElementById('episodic-user-filter').addEventListener('change', renderEpisodes);
+        document.getElementById('episodic-valence-filter').addEventListener('change', renderEpisodes);
+        document.getElementById('episodic-sort').addEventListener('change', renderEpisodes);
+        document.getElementById('semantic-user-filter').addEventListener('change', renderSemantic);
+        document.getElementById('procedural-user-filter').addEventListener('change', renderProcedural);
+
+        // ── Chat state persistence ──────────────────────────────────
+        function saveChatState() {
+            if (!chat_conversation_id) return;
+            const box = document.getElementById('chat-messages');
+            const bubbles = [];
+            box.querySelectorAll('.chat-bubble').forEach(el => {
+                const cls = el.classList.contains('user') ? 'user' : 'agent';
+                bubbles.push({ cls, html: el.innerHTML });
+            });
+            const wfStatus = document.getElementById('workflow-status');
+            const wfExec = document.getElementById('workflow-executions');
+            localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({
+                conversation_id: chat_conversation_id,
+                round_index: chat_round_index,
+                bubbles,
+                user: document.getElementById('chat-user').value,
+                wf_status_text: wfStatus ? wfStatus.textContent : '',
+                wf_status_class: wfStatus ? wfStatus.className : '',
+                wf_exec_html: wfExec ? wfExec.innerHTML : '',
+                wf_exec_display: wfExec ? wfExec.style.display : 'none',
+            }));
+        }
+        function clearChatState() { localStorage.removeItem(CHAT_STORAGE_KEY); }
+
+        async function restoreChatState() {
+            const raw = localStorage.getItem(CHAT_STORAGE_KEY);
+            if (!raw) return;
+            let state;
+            try { state = JSON.parse(raw); } catch { return; }
+            if (!state.conversation_id) return;
+
+            chat_conversation_id = state.conversation_id;
+            chat_round_index = state.round_index || 0;
+            updateChatSuggestion();
+            if (chat_round_index >= LIVE_CHAT_SCRIPT.length) {
+                document.getElementById('chat-input').disabled = true;
+                document.getElementById('chat-send-btn').disabled = true;
+                document.getElementById('chat-input').placeholder = 'Conversation complete';
+            }
+            const userSel = document.getElementById('chat-user');
+            if (state.user) {
+                for (const opt of userSel.options) if (opt.value === state.user) { userSel.value = state.user; break; }
+            }
+
+            const box = document.getElementById('chat-messages');
+            box.innerHTML = '';
+            for (const b of (state.bubbles || [])) {
+                const div = document.createElement('div');
+                div.className = 'chat-bubble ' + b.cls;
+                div.innerHTML = b.html;
+                box.appendChild(div);
+            }
+            box.scrollTop = box.scrollHeight;
+
+            document.getElementById('chat-conv-info').style.display = 'block';
+            const convUrl = `${KB_URL}/app/agent_builder/agents/${AGENT_ID}/conversations/${chat_conversation_id}`;
+            document.getElementById('chat-conv-id-display').innerHTML =
+                `<a href="${convUrl}" target="_blank" style="color:var(--accent);font-size:0.75rem;word-break:break-all;">${chat_conversation_id} ↗</a>`;
+            document.getElementById('save-memory-btn').disabled = false;
+
+            if (state.wf_status_text) {
+                const wfStatus = document.getElementById('workflow-status');
+                wfStatus.textContent = state.wf_status_text;
+                wfStatus.className = state.wf_status_class || 'workflow-status';
+            }
+            if (state.wf_exec_html) {
+                const wfExec = document.getElementById('workflow-executions');
+                wfExec.innerHTML = state.wf_exec_html;
+                wfExec.style.display = state.wf_exec_display || 'flex';
+                wfExec.querySelectorAll('.spinning').forEach(el => {
+                    el.classList.remove('spinning');
+                    if (el.textContent === '⏳') el.textContent = '✅';
+                });
+            }
+        }
+
+        // ── Chat functions ───────────────────────────────────────────
+        function useSuggestion(chip) {
+            document.getElementById('chat-input').value = chip.textContent.trim();
+            sendChat();
+        }
+
+        function appendBubble(text, cls, id) {
+            const box = document.getElementById('chat-messages');
+            const empty = box.querySelector('.chat-empty');
+            if (empty) empty.remove();
+            const div = document.createElement('div');
+            div.className = 'chat-bubble ' + cls;
+            if (id) div.id = id;
+            div.textContent = text;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+        function removeBubble(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+        function updateChatSuggestion() {
+            const box = document.getElementById('chat-suggestions');
+            if (chat_round_index >= LIVE_CHAT_SCRIPT.length) {
+                box.innerHTML = '';
+                return;
+            }
+            box.innerHTML = `<button class="chat-suggestion-chip" onclick="useSuggestion(this)">${LIVE_CHAT_SCRIPT[chat_round_index]}</button>`;
+        }
+
+        function askClarifyingQuestions(qa) {
+            return new Promise(resolve => {
+                const box = document.getElementById('chat-messages');
+                const questions = qa.questions || [];
+                const selected = questions.map(() => new Set());
+
+                const div = document.createElement('div');
+                div.className = 'chat-bubble agent chat-bubble-question';
+                let html = '<div class="chat-question-label">🤔 A few quick questions before I can help further:</div>';
+                questions.forEach((q, qi) => {
+                    html += `<div class="chat-question-text">${escapeHtml(q.question)}</div>`;
+                    html += `<div class="chat-question-options" data-qi="${qi}">` +
+                        (q.options || []).map((o, oi) =>
+                            `<button type="button" class="chat-option-btn" data-qi="${qi}" data-oi="${oi}">${escapeHtml(o.label)}</button>`
+                        ).join('') +
+                        '</div>';
+                });
+                html += `<div style="margin-top:0.5rem;"><button type="button" class="chat-option-btn chat-submit-btn" disabled>Submit answer${questions.length > 1 ? 's' : ''}</button></div>`;
+                div.innerHTML = html;
+                box.appendChild(div);
+                box.scrollTop = box.scrollHeight;
+
+                const submitBtn = div.querySelector('.chat-submit-btn');
+                function updateSubmitState() {
+                    submitBtn.disabled = selected.some(s => s.size === 0);
+                }
+                div.querySelectorAll('.chat-question-options .chat-option-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const qi = parseInt(btn.dataset.qi, 10);
+                        const oi = parseInt(btn.dataset.oi, 10);
+                        const multi = questions[qi].multi_select;
+                        const group = div.querySelector(`.chat-question-options[data-qi="${qi}"]`);
+                        if (multi) {
+                            if (selected[qi].has(oi)) { selected[qi].delete(oi); btn.classList.remove('chosen'); }
+                            else { selected[qi].add(oi); btn.classList.add('chosen'); }
+                        } else {
+                            selected[qi] = new Set([oi]);
+                            group.querySelectorAll('.chat-option-btn').forEach(b => b.classList.remove('chosen'));
+                            btn.classList.add('chosen');
+                        }
+                        updateSubmitState();
+                    });
+                });
+                submitBtn.addEventListener('click', () => {
+                    if (div.dataset.answered) return;
+                    div.dataset.answered = '1';
+                    div.querySelectorAll('.chat-option-btn').forEach(b => b.disabled = true);
+                    const labelText = questions.map((q, qi) =>
+                        Array.from(selected[qi]).map(oi => q.options[oi].label).join(', ')
+                    ).join(' | ');
+                    resolve(labelText);
+                });
+            });
+        }
+
+        function appendChatMeta(panel) {
+            const html = renderCompMeta(panel);
+            if (!html) return;
+            const box = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = 'chat-meta';
+            div.style.cssText = 'display:flex; gap:1rem; flex-wrap:wrap; font-size:0.72rem; color:var(--text-secondary); margin:-0.5rem 0 0.75rem 0.5rem;';
+            div.innerHTML = html;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function postChat() {
+            const input = document.getElementById('chat-input');
+            const timerEl = document.getElementById('chat-thinking-timer');
+            input.disabled = true;
+            document.getElementById('chat-send-btn').disabled = true;
+            appendBubble('', 'thinking', 'thinking-bubble');
+            timerEl.style.display = 'inline';
+
+            try {
+                const resp = await fetch(`/api/seed_chat?round_index=${chat_round_index}`);
+                const data = await resp.json();
+
+                if (data.error) {
+                    removeBubble('thinking-bubble');
+                    appendBubble('Error: ' + data.error, 'agent');
+                } else {
+                    const totalMs = data.duration_ms || 1500;
+                    const hasQuestions = data.clarifying_qa && data.clarifying_qa.questions && data.clarifying_qa.questions.length;
+                    const preMs = hasQuestions ? Math.round(totalMs * 0.4) : totalMs;
+
+                    await simulateThinking('thinking-bubble', 'chat-thinking-timer', preMs, 'Thinking...');
+                    removeBubble('thinking-bubble');
+
+                    if (hasQuestions) {
+                        const labelText = await askClarifyingQuestions(data.clarifying_qa);
+                        appendBubble(labelText, 'user');
+                        appendBubble('', 'thinking', 'thinking-bubble');
+                        timerEl.style.display = 'inline';
+                        await simulateThinking('thinking-bubble', 'chat-thinking-timer', totalMs - preMs, 'Thinking...');
+                        removeBubble('thinking-bubble');
+                    }
+
+                    appendBubble(data.response, 'agent');
+                    appendChatMeta(data);
+                    chat_conversation_id = data.conversation_id;
+                    chat_round_index = data.round_index + 1;
+                    updateChatSuggestion();
+                    document.getElementById('chat-conv-info').style.display = 'block';
+                    document.getElementById('chat-conv-id-display').innerHTML =
+                        `<a href="${data.conversation_url}" target="_blank" style="color:var(--accent); font-size:0.75rem; word-break:break-all;">${chat_conversation_id} ↗</a>`;
+                    document.getElementById('save-memory-btn').disabled = false;
+                    saveChatState();
+                    if (data.is_last) {
+                        input.placeholder = 'Conversation complete';
+                        appendBubble('— Conversation complete —', 'thinking');
+                        timerEl.style.display = 'none';
+                        return;
+                    }
+                }
+            } catch (e) {
+                removeBubble('thinking-bubble');
+                appendBubble('Request failed: ' + e.message, 'agent');
+            }
+
+            timerEl.style.display = 'none';
+            input.disabled = false;
+            document.getElementById('chat-send-btn').disabled = false;
+            input.focus();
+        }
+
+        async function sendChat() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+            appendBubble(msg, 'user');
+            input.value = '';
+            await postChat();
+        }
+
+        async function saveAsMemory() {
+            if (!chat_conversation_id) return;
+            const userVal = document.getElementById('chat-user').value;
+            const [user_id, user_name] = userVal.split('|');
+
+            const btn = document.getElementById('save-memory-btn');
+            const status = document.getElementById('workflow-status');
+            const execContainer = document.getElementById('workflow-executions');
+            btn.disabled = true;
+            status.className = 'workflow-status';
+            status.textContent = '⚡ Triggering Kibana Workflows...';
+            execContainer.style.display = 'none';
+            execContainer.innerHTML = '';
+
+            try {
+                const resp = await fetch('/api/trigger_episodic_workflow', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ conversation_id: chat_conversation_id, user_id, user_name })
+                });
+                const data = await resp.json();
+
+                if (data.error) {
+                    status.className = 'workflow-status error';
+                    status.textContent = 'Error: ' + data.error;
+                    btn.disabled = false;
+                } else {
+                    status.className = 'workflow-status success';
+                    status.textContent = `✓ ${(data.executions || []).length} workflow(s) triggered! Episodic appears in ~25s, Semantic in ~60s.`;
+
+                    const executions = data.executions || [];
+                    execContainer.style.display = 'flex';
+                    execContainer.innerHTML = executions.map((ex, i) => `
+                        <div class="workflow-execution-item" id="wf-exec-${i}">
+                            <span class="wf-status-icon spinning" id="wf-icon-${i}">⏳</span>
+                            ${ex.execution_url ? `<a href="${ex.execution_url}" target="_blank">${ex.label}</a>` : `<span style="color:var(--text-secondary)">${ex.label}</span>`}
+                        </div>
+                    `).join('');
+                    pollWorkflowExecutions(executions);
+                    saveChatState();
+
+                    setTimeout(() => loadEpisodes(), 25000);
+                    setTimeout(() => loadSemantic(), 60000);
+                }
+            } catch (e) {
+                status.className = 'workflow-status error';
+                status.textContent = 'Request failed: ' + e.message;
+                btn.disabled = false;
+            }
+        }
+
+        function pollWorkflowExecutions(executions) {
+            const done = new Array(executions.length).fill(false);
+
+            async function checkOne(ex, i) {
+                if (done[i]) return;
+                let wf_id = null;
+                if (ex.execution_url) {
+                    const m = ex.execution_url.match(/\/app\/workflows\/([^?]+)/);
+                    if (m) wf_id = m[1];
+                }
+                if (!wf_id || !ex.execution_id) { done[i] = true; return; }
+                try {
+                    const r = await fetch(`/api/workflow_status?workflow_id=${encodeURIComponent(wf_id)}&execution_id=${encodeURIComponent(ex.execution_id)}`);
+                    const d = await r.json();
+                    const icon = document.getElementById(`wf-icon-${i}`);
+                    if (!icon) return;
+                    const status = d.status || 'pending';
+                    if (status === 'completed') { icon.textContent = '✅'; icon.classList.remove('spinning'); done[i] = true; }
+                    else if (['failed', 'error', 'cancelled'].includes(status)) { icon.textContent = '❌'; icon.classList.remove('spinning'); done[i] = true; }
+                } catch (_) {}
+            }
+
+            const interval = setInterval(async () => {
+                await Promise.all(executions.map((ex, i) => checkOne(ex, i)));
+                if (done.every(Boolean)) { clearInterval(interval); saveChatState(); }
+            }, 4000);
+            setTimeout(() => clearInterval(interval), 180000);
+        }
+
+        // ── Episodic ─────────────────────────────────────────────────
+        async function loadEpisodes() {
+            try {
+                const response = await fetch('/api/episodes');
+                if (!response.ok) throw new Error('Failed to load episodes');
+                episodic_data = await response.json();
+                updateEpisodicStats();
+                renderEpisodes();
+            } catch (error) {
+                showError('Error loading episodic memory: ' + error.message);
+                document.getElementById('episodic-cards').innerHTML = '<p style="grid-column: 1/-1; padding: 2rem; text-align: center;">Unable to load data</p>';
+            }
+        }
+
+        function updateEpisodicStats() {
+            document.getElementById('episodic-count').textContent = episodic_data.length;
+            const users = new Set(episodic_data.map(e => e.user_id));
+            document.getElementById('user-count').textContent = users.size;
+            const topics = new Set(episodic_data.flatMap(e => Array.isArray(e.topics) ? e.topics : (e.topics || '').split(',').map(s => s.trim()).filter(Boolean)));
+            document.getElementById('topic-count').textContent = topics.size;
+        }
+
+        function renderEpisodes() {
+            let filtered = [...episodic_data];
+            const userFilter = document.getElementById('episodic-user-filter').value;
+            if (userFilter) filtered = filtered.filter(e => e.user_id === userFilter);
+            const valenceFilter = document.getElementById('episodic-valence-filter').value;
+            if (valenceFilter) filtered = filtered.filter(e => e.emotional_valence === valenceFilter);
+            const sort = document.getElementById('episodic-sort').value;
+            if (sort === 'date-asc') filtered.sort((a, b) => new Date(a.session_date) - new Date(b.session_date));
+            else if (sort === 'date-desc') filtered.sort((a, b) => new Date(b.session_date) - new Date(a.session_date));
+            else if (sort === 'importance-desc') filtered.sort((a, b) => b.importance_score - a.importance_score);
+
+            const container = document.getElementById('episodic-cards');
+            container.innerHTML = filtered.map(episode => {
+                const valence_emoji = episode.emotional_valence === 'positive' ? '😊' : episode.emotional_valence === 'negative' ? '😟' : '😐';
+                const date = new Date(episode.session_date).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="avatar ${avatarClass(episode)}">${initials(episode)}</div>
+                            <div class="card-header-info">
+                                <div class="name">${displayUser(episode)}</div>
+                                <div class="date">${date}</div>
+                            </div>
+                            <div class="topic-badge">${(Array.isArray(episode.topics) ? episode.topics[0] : (episode.topics || '').split(',')[0]?.trim()) || (episode.issue_context || 'General')}</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-summary">${episode.summary}</div>
+                            <div class="tags">
+                                ${(Array.isArray(episode.key_entities) ? episode.key_entities : (episode.key_entities || '').split(',').map(s => s.trim()).filter(Boolean)).slice(0, 4).map(e => `<span class="tag">${e}</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="footer-section">
+                                <span class="valence-icon">${valence_emoji}</span>
+                                <span class="score-item"><span class="stars">★</span> ${(episode.importance_score ?? 0).toFixed(1)}</span>
+                            </div>
+                            <div class="footer-section" style="color: var(--text-secondary); font-size: 0.8rem;">
+                                ${episode.memory_source === 'kibana_workflow' ? '<span style="opacity:0.7">⚡ workflow</span>' : '<span style="opacity:0.7">📄 imported</span>'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ── Semantic ─────────────────────────────────────────────────
+        async function loadSemantic() {
+            try {
+                const response = await fetch('/api/semantic');
+                if (!response.ok) throw new Error('Failed to load semantic memory');
+                semantic_data = await response.json();
+                updateSemanticStats();
+                renderSemantic();
+            } catch (error) {
+                showError('Error loading semantic memory: ' + error.message);
+                document.getElementById('semantic-content').innerHTML = '<p style="padding: 2rem; text-align: center;">Unable to load data</p>';
+            }
+        }
+        function updateSemanticStats() {
+            document.getElementById('semantic-count').textContent = semantic_data.length;
+            const avg = semantic_data.length > 0
+                ? Math.round(semantic_data.reduce((sum, s) => sum + (s.confidence_score || 0), 0) / semantic_data.length * 100)
+                : 0;
+            document.getElementById('avg-confidence').textContent = avg + '%';
+        }
+        function renderSemantic() {
+            const container = document.getElementById('semantic-content');
+            const filter = document.getElementById('semantic-user-filter').value;
+            const grouped = {};
+            semantic_data.filter(item => !filter || (item.user_id || item.user) === filter).forEach(item => {
+                const key = item.user_id || item.user || 'unknown';
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(item);
+            });
+            container.innerHTML = Object.entries(grouped).map(([userId, items]) => {
+                const displayName = userId.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                return `
+                    <div>
+                        <div class="section-header">👤 ${displayName}</div>
+                        <div class="cards-grid">
+                            ${items.map(item => {
+                                const date = new Date(item.last_updated).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                                return `
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="card-title">${item.entity_name}</div>
+                                            <span class="entity-type-badge">${item.entity_type}</span>
+                                            <div class="facts-text">${item.facts}</div>
+                                        </div>
+                                        <div style="margin-bottom: 1rem;">
+                                            <div class="progress-label"><span>Confidence</span><span>${Math.round((item.confidence_score || 0) * 100)}%</span></div>
+                                            <div class="progress-bar"><div class="progress-fill" style="width: ${Math.round((item.confidence_score || 0) * 100)}%"></div></div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <div class="footer-section"><span class="source-badge">${item.total_episodes_analyzed || (item.source_episode_ids || []).length} episodes analyzed</span></div>
+                                            <div class="footer-section" style="font-size: 0.8rem; color: var(--text-secondary);">Updated ${date}</div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ── Procedural ───────────────────────────────────────────────
+        function parseProcedureText(text) {
+            if (!text) return { name: 'Unnamed Procedure', trigger: '', steps: [] };
+            const nameMatch = text.match(/PROCEDURE_NAME:\s*(.+)/i);
+            const triggerMatch = text.match(/TRIGGER:\s*(.+)/i);
+            const stepsMatch = text.match(/STEPS:\s*([\s\S]+)/i);
+            const name = nameMatch ? nameMatch[1].trim() : 'Procedure';
+            const trigger = triggerMatch ? triggerMatch[1].trim() : '';
+            const steps = stepsMatch ? stepsMatch[1].split('\n').map(s => s.trim()).filter(s => /^\d+\./.test(s)) : [];
+            return { name, trigger, steps };
+        }
+
+        async function loadProcedural() {
+            try {
+                const response = await fetch('/api/procedural');
+                if (!response.ok) throw new Error('Failed to load procedural memory');
+                procedural_data = await response.json();
+                updateProceduralStats();
+                renderProcedural();
+            } catch (error) {
+                showError('Error loading procedural memory: ' + error.message);
+                document.getElementById('procedural-content').innerHTML = '<p style="padding: 2rem; text-align: center;">Unable to load data</p>';
+            }
+        }
+        function updateProceduralStats() {
+            document.getElementById('procedural-count').textContent = procedural_data.length;
+            document.getElementById('procedural-user-count').textContent = new Set(procedural_data.map(p => p.user_id)).size;
+        }
+        function renderProcedural() {
+            const filter = document.getElementById('procedural-user-filter').value;
+            const container = document.getElementById('procedural-content');
+            let data = procedural_data;
+            if (filter) data = data.filter(p => p.user_id === filter);
+
+            const grouped = {};
+            data.forEach(p => {
+                const key = p.user_id || 'unknown';
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(p);
+            });
+
+            if (Object.keys(grouped).length === 0) {
+                container.innerHTML = '<p style="padding: 2rem; text-align: center; color: var(--text-secondary);">No procedural memories yet. Trigger the procedural workflow to generate some.</p>';
+                return;
+            }
+
+            container.innerHTML = Object.entries(grouped).map(([userId, items]) => {
+                const displayName = userId.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                return `
+                    <div>
+                        <div class="section-header">👤 ${displayName}</div>
+                        <div class="cards-grid">
+                            ${items.map(item => {
+                                const parsed = parseProcedureText(item.procedure_text);
+                                const stepsHtml = parsed.steps.length > 0
+                                    ? `<ol style="margin: 0.5rem 0 0 1.2rem; padding: 0; font-size: 0.85rem; line-height: 1.7;">${parsed.steps.map(s => `<li>${s.replace(/^\d+\.\s*/, '')}</li>`).join('')}</ol>`
+                                    : `<pre style="font-size:0.8rem; white-space:pre-wrap; margin:0.5rem 0 0;">${item.procedure_text || ''}</pre>`;
+                                const ctx = (item.procedure_context || '').replace(/_/g, ' ');
+                                return `
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="card-title">⚙️ ${parsed.name}</div>
+                                            ${parsed.trigger ? `<div style="font-size:0.82rem; color:var(--accent); margin: 0.4rem 0; font-style:italic;">When: ${parsed.trigger}</div>` : ''}
+                                            ${stepsHtml}
+                                        </div>
+                                        <div class="card-footer">
+                                            <div class="footer-section"><span class="source-badge" style="background: rgba(0,200,150,0.15); color: #00c896;">${ctx}</span></div>
+                                            <div class="footer-section" style="font-size:0.8rem; color:var(--text-secondary);">${item.created_from_episodes || 0} episodes · <span style="opacity:0.7">⚡ workflow</span></div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ── Remediation ──────────────────────────────────────────────
+        function parseRemediationText(text) {
+            if (!text) return { stepsCompleted: [], stepsRemaining: [], exhausted: false, nextAction: '' };
+            const scMatch = text.match(/STEPS_COMPLETED:\s*(.+)/i);
+            const srMatch = text.match(/STEPS_REMAINING:\s*(.+)/i);
+            const leMatch = text.match(/LADDER_EXHAUSTED:\s*(true|false)/i);
+            const naMatch = text.match(/NEXT_ACTION:\s*([\s\S]+)/i);
+            return {
+                stepsCompleted: scMatch ? scMatch[1].split(',').map(s => s.trim()).filter(Boolean) : [],
+                stepsRemaining: srMatch ? srMatch[1].split(',').map(s => s.trim()).filter(Boolean) : [],
+                exhausted: leMatch ? leMatch[1].toLowerCase() === 'true' : false,
+                nextAction: naMatch ? naMatch[1].trim() : '',
+            };
+        }
+
+        async function loadRemediation() {
+            try {
+                const response = await fetch('/api/remediation');
+                if (!response.ok) throw new Error('Failed to load remediation memory');
+                remediation_data = await response.json();
+                renderRemediation();
+            } catch (error) {
+                showError('Error loading remediation memory: ' + error.message);
+                document.getElementById('remediation-cards').innerHTML = '<p style="grid-column:1/-1; padding: 2rem; text-align: center;">Unable to load data</p>';
+            }
+        }
+
+        function renderRemediation() {
+            document.getElementById('remediation-count').textContent = remediation_data.length;
+            document.getElementById('remediation-offers').textContent = remediation_data.filter(r => isTrue(r.final_offer_issued)).length;
+
+            const container = document.getElementById('remediation-cards');
+            if (remediation_data.length === 0) {
+                container.innerHTML = '<p style="grid-column:1/-1; padding: 2rem; text-align: center; color: var(--text-secondary);">No remediation ladders tracked yet.</p>';
+                return;
+            }
+
+            container.innerHTML = remediation_data.map(item => {
+                const parsed = parseRemediationText(item.recommended_next_action);
+                const ladderSteps = (item.ladder_steps || '').split(',').map(s => s.trim()).filter(Boolean);
+                const isDone = step => parsed.stepsCompleted.some(s => s.toLowerCase().includes(step.toLowerCase().split(' ')[0]) || step.toLowerCase().includes(s.toLowerCase()));
+                const warrantyExpired = item.warranty_status === 'expired';
+                const exhausted = isTrue(item.ladder_exhausted);
+                const offerIssued = isTrue(item.final_offer_issued);
+
+                const ladderHtml = ladderSteps.map(step => `
+                    <li class="${isDone(step) ? 'done' : ''}">${isDone(step) ? '✅' : '⬜'} ${step}</li>
+                `).join('');
+
+                return `
+                    <div class="rem-card ${offerIssued ? 'exhausted-expired' : ''}">
+                        <div class="rem-header">
+                            <div>
+                                <div class="rem-title">${displayUser(item)}</div>
+                                <div class="rem-device">${item.device || 'Amazon Fire TV'} — ${(item.issue_context || '').replace(/_/g, ' ')}</div>
+                            </div>
+                            <span class="warranty-badge ${warrantyExpired ? 'expired' : 'active'}">${warrantyExpired ? 'Warranty Expired' : 'Under Warranty'}</span>
+                        </div>
+                        <ul class="ladder-list">${ladderHtml}</ul>
+                        ${parsed.nextAction ? `<div class="next-action">${parsed.nextAction}</div>` : ''}
+                        ${offerIssued ? `<div class="offer-banner">🎁 ${item.final_offer_text || 'Offer 10% off next Amazon Fire TV purchase — all troubleshooting steps exhausted and unit is out of warranty.'}</div>` : ''}
+                        <div style="margin-top:0.75rem;">
+                            <button class="refresh-btn" onclick="reassessLadder('${item.user_id}')">↻ Re-assess ladder</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function reassessLadder(user_id) {
+            try {
+                await fetch('/api/trigger_remediation_workflow', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id })
+                });
+                setTimeout(loadRemediation, 15000);
+            } catch (e) {
+                showError('Failed to trigger remediation re-assessment: ' + e.message);
+            }
+        }
+
+        // ── Search ───────────────────────────────────────────────────
+        async function searchMemory() {
+            const query = document.getElementById('search-input').value.trim();
+            const type = document.querySelector('input[name="memory-type"]:checked').value;
+            if (!query) { showError('Please enter a search query'); return; }
+            try {
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=${type}`);
+                if (!response.ok) throw new Error('Search failed');
+                renderSearchResults(await response.json());
+            } catch (error) {
+                showError('Error searching memory: ' + error.message);
+            }
+        }
+        function renderSearchResults(results) {
+            const container = document.getElementById('search-results');
+            const flat = Array.isArray(results) ? results : [];
+            const episodic = flat.filter(r => r.type === 'episodic');
+            const semantic = flat.filter(r => r.type === 'semantic');
+            if (flat.length === 0) {
+                container.innerHTML = '<p style="padding: 2rem; text-align: center; color: var(--text-secondary);">No results found</p>';
+                return;
+            }
+            let html = '';
+            if (episodic.length > 0) {
+                html += '<div class="section-header">📅 Episodic Results</div><div class="cards-grid">';
+                html += episodic.map(item => {
+                    const date = new Date(item.session_date).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                    const scoreDisplay = item.score ? (item.score * 100).toFixed(0) + '% match' : '';
+                    return `
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="avatar ${avatarClass(item)}">${initials(item)}</div>
+                                <div class="card-header-info"><div class="name">${displayUser(item)}</div><div class="date">${date}</div></div>
+                                ${scoreDisplay ? `<div class="similarity-badge">${scoreDisplay}</div>` : ''}
+                            </div>
+                            <div class="card-body"><div class="card-summary">${item.summary}</div></div>
+                        </div>
+                    `;
+                }).join('');
+                html += '</div>';
+            }
+            if (semantic.length > 0) {
+                html += '<div class="section-header" style="margin-top: 2rem;">🧠 Semantic Results</div><div class="cards-grid">';
+                html += semantic.map(item => {
+                    const scoreDisplay = item.score ? (item.score * 100).toFixed(0) + '% match' : '';
+                    return `
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="card-title">${item.entity_name}</div>
+                                ${scoreDisplay ? `<div class="similarity-badge">${scoreDisplay}</div>` : ''}
+                                <span class="entity-type-badge">${item.entity_type}</span>
+                                <div class="facts-text">${item.facts}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                html += '</div>';
+            }
+            container.innerHTML = html;
+        }
+
+        // ── Recall ───────────────────────────────────────────────────
+        async function recallMemory() {
+            const userId = document.getElementById('recall-user').value;
+            const context = document.getElementById('recall-context').value.trim();
+            if (!context) { showError('Please enter conversation context'); return; }
+            try {
+                const response = await fetch(`/api/recall?user_id=${userId}&context=${encodeURIComponent(context)}`);
+                if (!response.ok) throw new Error('Recall failed');
+                renderRecallResults(await response.json());
+            } catch (error) {
+                showError('Error recalling memory: ' + error.message);
+            }
+        }
+        function renderRecallResults(results) {
+            const container = document.getElementById('recall-results');
+            const scorePill = score => {
+                if (!score) return '';
+                const pct = Math.round(score * 100);
+                const cls = pct >= 80 ? 'high' : pct >= 60 ? 'medium' : 'low';
+                return `<span class="score-pill ${cls}">${pct}%</span>`;
+            };
+
+            const episodic_html = results.episodic && results.episodic.length > 0 ? results.episodic.map(item => {
+                const date = new Date(item.session_date).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="avatar ${avatarClass(item)}">${initials(item)}</div>
+                            <div class="card-header-info"><div class="name">${displayUser(item)}</div><div class="date">${date}</div></div>
+                            ${scorePill(item.score)}
+                        </div>
+                        <div class="card-body"><div class="card-summary">${item.summary}</div></div>
+                    </div>
+                `;
+            }).join('') : '<p style="color: var(--text-secondary);">No episodic memories recalled</p>';
+
+            const semantic_html = results.semantic && results.semantic.length > 0 ? results.semantic.map(item => `
+                <div class="card">
+                    <div class="card-body">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.4rem;">
+                            <div class="card-title" style="margin:0;">${item.entity_name}</div>${scorePill(item.score)}
+                        </div>
+                        <span class="entity-type-badge">${item.entity_type}</span>
+                        <div class="facts-text">${item.facts}</div>
+                    </div>
+                </div>
+            `).join('') : '<p style="color: var(--text-secondary);">No semantic knowledge recalled</p>';
+
+            const procedural_html = results.procedural && results.procedural.length > 0 ? results.procedural.map(item => {
+                const parsed = parseProcedureText(item.procedure_text);
+                const stepsHtml = parsed.steps.length > 0
+                    ? `<ol style="margin:0.4rem 0 0 1.1rem; padding:0; font-size:0.82rem; line-height:1.6;">${parsed.steps.map(s => `<li>${s.replace(/^\d+\.\s*/, '')}</li>`).join('')}</ol>`
+                    : `<div style="font-size:0.82rem;">${item.procedure_text || ''}</div>`;
+                return `
+                    <div class="card">
+                        <div class="card-body">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.4rem;">
+                                <div class="card-title" style="margin:0;">⚙️ ${parsed.name}</div>${scorePill(item.score)}
+                            </div>
+                            ${parsed.trigger ? `<div style="font-size:0.8rem; color:var(--accent); font-style:italic; margin:0.3rem 0;">When: ${parsed.trigger}</div>` : ''}
+                            ${stepsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('') : '<p style="color: var(--text-secondary);">No procedures recalled</p>';
+
+            const remediation_html = results.remediation && results.remediation.length > 0 ? results.remediation.map(item => {
+                const parsed = parseRemediationText(item.recommended_next_action);
+                return `
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="card-title">🛠️ ${(item.issue_context || '').replace(/_/g, ' ')}</div>
+                            <span class="warranty-badge ${item.warranty_status === 'expired' ? 'expired' : 'active'}">${item.warranty_status === 'expired' ? 'Expired' : 'Active'}</span>
+                            <div class="next-action" style="margin-top:0.5rem;">${parsed.nextAction || ''}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('') : '<p style="color: var(--text-secondary);">No remediation state recalled</p>';
+
+            container.innerHTML = `
+                <div class="recall-results" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="recall-column"><h3>📅 Episodic (${results.episodic ? results.episodic.length : 0})</h3><div class="recall-results-grid">${episodic_html}</div></div>
+                    <div class="recall-column"><h3>🧠 Semantic (${results.semantic ? results.semantic.length : 0})</h3><div class="recall-results-grid">${semantic_html}</div></div>
+                    <div class="recall-column"><h3>⚙️ Procedural (${results.procedural ? results.procedural.length : 0})</h3><div class="recall-results-grid">${procedural_html}</div></div>
+                    <div class="recall-column"><h3>🛠️ Remediation (${results.remediation ? results.remediation.length : 0})</h3><div class="recall-results-grid">${remediation_html}</div></div>
+                </div>
+            `;
+        }
+
+        // ── Reset ────────────────────────────────────────────────────
+        async function resetDemo() {
+            const user = document.getElementById('reset-user-select').value;
+            const label = user ? user.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'all users';
+            if (!confirm(`Reset demo for ${label}?\n\nThis will:\n• Delete live-chat episodes not in the original seed\n• Re-run semantic + procedural + remediation workflows\n• Clear the live chat conversation\n\nUI will update in ~30s.`)) return;
+
+            const btn = document.getElementById('reset-btn');
+            btn.disabled = true;
+            btn.textContent = '↺ Resetting...';
+
+            if (chat_conversation_id && chat_conversation_id !== SEED_CONV_ID) {
+                try {
+                    await fetch('/api/delete_conversation', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ conversation_id: chat_conversation_id })
+                    });
+                } catch {}
+            }
+            clearChatState();
+            chat_conversation_id = null;
+            chat_round_index = 0;
+            document.getElementById('chat-messages').innerHTML = '<div class="chat-empty">Start a conversation with the Fire TV Support Specialist.<br>Ask about power issues, remote pairing, streaming lag, or app crashes.</div>';
+            document.getElementById('chat-conv-info').style.display = 'none';
+            document.getElementById('save-memory-btn').disabled = true;
+            document.getElementById('chat-input').disabled = false;
+            document.getElementById('chat-send-btn').disabled = false;
+            document.getElementById('chat-input').placeholder = 'Describe the Fire TV issue...';
+            updateChatSuggestion();
+            document.getElementById('workflow-status').textContent = '';
+            document.getElementById('workflow-status').className = 'workflow-status';
+            document.getElementById('workflow-executions').innerHTML = '';
+            document.getElementById('workflow-executions').style.display = 'none';
+
+            try {
+                const resp = await fetch('/api/reset_demo', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: user || null })
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    alert('Reset failed: ' + data.error);
+                } else {
+                    btn.textContent = '✓ Reset triggered';
+                    setTimeout(() => {
+                        loadEpisodes(); loadSemantic(); loadProcedural(); loadRemediation();
+                        btn.disabled = false;
+                        btn.textContent = '↺ Reset Demo';
+                    }, 30000);
+                }
+            } catch (e) {
+                alert('Reset failed: ' + e.message);
+                btn.disabled = false;
+                btn.textContent = '↺ Reset Demo';
+            }
+        }
+
+        // ── Memory Comparison ────────────────────────────────────────
+        function setCompQuestion(chip) {
+            document.getElementById('comp-question').value = chip.textContent.trim();
+        }
+
+        function escapeHtml(s) {
+            return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+        function renderCompResponse(panel) {
+            if (panel.status === 'awaiting_prompt' && panel.pending_prompts && panel.pending_prompts.length) {
+                const questions = (panel.pending_prompts[0] && panel.pending_prompts[0].questions) || [];
+                let html = '<div class="chat-question-label">🤔 Agent is asking a clarifying question instead of answering:</div>';
+                questions.forEach(q => {
+                    html += `<div class="chat-question-text">${escapeHtml(q.question)}</div>`;
+                    if (q.options && q.options.length) {
+                        html += '<div class="chat-question-options">' +
+                            q.options.map(o => `<span class="chat-option-btn" style="cursor:default;">${escapeHtml(o.label)}</span>`).join('') +
+                            '</div>';
+                    }
+                });
+                return html;
+            }
+            return escapeHtml(panel.response) || '(no response)';
+        }
+        function renderCompMeta(panel) {
+            if (!panel || panel.duration_ms == null) return '';
+            const seconds = (panel.duration_ms / 1000).toFixed(1);
+            const tokens = panel.tokens || {};
+            const totalTokens = (tokens.total || 0).toLocaleString();
+            const link = panel.conversation_url
+                ? `<a href="${panel.conversation_url}" target="_blank" rel="noopener" style="color:var(--accent);">🔗 View conversation</a>`
+                : '';
+            return `<span>⏱ ${seconds}s</span><span>🔤 ${totalTokens} tokens</span>${link}`;
+        }
+
+        function showCompMeta(elId, panel) {
+            const el = document.getElementById(elId);
+            const html = renderCompMeta(panel);
+            if (html) {
+                el.innerHTML = html;
+                el.style.display = 'flex';
+            }
+        }
+
+        // Simulates a live "thinking" wait using the real recorded latency from the
+        // pre-baked conversation, so the panel doesn't reveal its answer instantly.
+        function simulateThinking(loadingElId, timerElId, durationMs, label) {
+            return new Promise(resolve => {
+                const loadingEl = document.getElementById(loadingElId);
+                const timerEl = document.getElementById(timerElId);
+                const start = Date.now();
+                const total = durationMs || 1500;
+                const tick = () => {
+                    const elapsed = Date.now() - start;
+                    timerEl.textContent = (elapsed / 1000).toFixed(1) + 's';
+                    if (elapsed < total) {
+                        requestAnimationFrame(tick);
+                    } else {
+                        resolve();
+                    }
+                };
+                loadingEl.innerHTML = `<div class="comp-loading">⏳ ${label}</div>`;
+                tick();
+            });
+        }
+
+        async function runComparison() {
+            const userVal = document.getElementById('comp-user').value;
+            const [user_id, user_name] = userVal.split('|');
+            const message = document.getElementById('comp-question').value.trim();
+            if (!message) return;
+
+            const memory_types = [];
+            if (document.getElementById('comp-mem-semantic').checked)    memory_types.push('semantic');
+            if (document.getElementById('comp-mem-episodic').checked)    memory_types.push('episodic');
+            if (document.getElementById('comp-mem-procedural').checked) memory_types.push('procedural');
+            if (document.getElementById('comp-mem-remediation').checked) memory_types.push('remediation');
+
+            const btn = document.getElementById('comp-run-btn');
+            const panels = document.getElementById('comp-panels');
+            const status = document.getElementById('comp-status');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Running...';
+            panels.style.display = 'grid';
+            status.style.display = 'block';
+            status.textContent = 'Both panels asking the agent simultaneously...';
+
+            document.getElementById('comp-without-response').innerHTML = '<div class="comp-loading">⏳ Thinking...</div>';
+            document.getElementById('comp-with-response').innerHTML = '<div class="comp-loading">⏳ Recalling memories and thinking...</div>';
+            document.getElementById('comp-memory-detail').style.display = 'none';
+            document.getElementById('comp-without-meta').style.display = 'none';
+            document.getElementById('comp-with-meta').style.display = 'none';
+            document.getElementById('comp-without-timer').textContent = '';
+            document.getElementById('comp-with-timer').textContent = '';
+
+            try {
+                const resp = await fetch('/api/chat_comparison', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id, user_name, message, context_query: message, memory_types })
+                });
+                const data = await resp.json();
+
+                const withoutEl = document.getElementById('comp-without-response');
+                const withEl = document.getElementById('comp-with-response');
+
+                // Cap the on-screen wait so slow recorded rounds don't stall the demo —
+                // each side reveals independently once its own capped timer is up (not
+                // gated on the other), but the meta line still reports the real recorded
+                // duration_ms/tokens, since that's the actual perf data being demoed.
+                const WITHOUT_CAP_MS = 30000;
+                const WITH_CAP_MS = 5000;
+
+                const withoutDone = (async () => {
+                    if (data.without && !data.without.error) {
+                        const displayMs = Math.min(data.without.duration_ms, WITHOUT_CAP_MS);
+                        await simulateThinking('comp-without-response', 'comp-without-timer', displayMs, 'Thinking...');
+                        withoutEl.innerHTML = renderCompResponse(data.without);
+                        showCompMeta('comp-without-meta', data.without);
+                    } else {
+                        withoutEl.innerHTML = '<span style="color:#f87171;">Error: ' + (data.without && data.without.error || 'unknown') + '</span>';
+                    }
+                })();
+
+                const withDone = (async () => {
+                    if (data.with && !data.with.error) {
+                        const displayMs = Math.min(data.with.duration_ms, WITH_CAP_MS);
+                        await simulateThinking('comp-with-response', 'comp-with-timer', displayMs, 'Recalling memories and thinking...');
+                        withEl.innerHTML = renderCompResponse(data.with);
+                        showCompMeta('comp-with-meta', data.with);
+                        const recalled = data.with.recalled || {};
+                        const pills = [];
+                        (recalled.episodic || []).forEach(ep => pills.push(`<span class="comp-memory-pill">📅 ${(ep.summary || '').slice(0, 60)}…</span>`));
+                        (recalled.semantic || []).forEach(sm => pills.push(`<span class="comp-memory-pill">🧠 ${sm.entity_name}: ${(sm.facts || '').slice(0, 55)}…</span>`));
+                        (recalled.procedural || []).forEach(pm => pills.push(`<span class="comp-memory-pill">⚙️ ${(pm.procedure_context || 'procedure')}</span>`));
+                        (recalled.remediation || []).forEach(rm => pills.push(`<span class="comp-memory-pill">🛠️ ${(rm.issue_context || '').replace(/_/g,' ')}: ${rm.warranty_status}</span>`));
+                        if (pills.length > 0) {
+                            document.getElementById('comp-memory-detail').style.display = 'block';
+                            const total = Object.values(recalled).reduce((s, arr) => s + (arr ? arr.length : 0), 0);
+                            document.getElementById('comp-memory-pills').innerHTML =
+                                `<div style="font-size:0.7rem;color:var(--text-secondary);width:100%;margin-bottom:0.4rem;">${total} memories injected as context</div>` + pills.join('');
+                        }
+                    } else {
+                        withEl.innerHTML = '<span style="color:#f87171;">Error: ' + (data.with && data.with.error || 'unknown') + '</span>';
+                    }
+                })();
+
+                withDone.then(() => {
+                    status.textContent = '✓ With-memory response ready. Waiting on without-memory…';
+                });
+                await Promise.all([withoutDone, withDone]);
+
+                status.textContent = '✓ Both complete. See the difference memory makes.';
+            } catch (e) {
+                document.getElementById('comp-without-response').innerHTML = '<span style="color:#f87171;">Request failed: ' + e.message + '</span>';
+                document.getElementById('comp-with-response').innerHTML = '<span style="color:#f87171;">Request failed: ' + e.message + '</span>';
+                status.textContent = 'Request failed.';
+            }
+
+            btn.disabled = false;
+            btn.textContent = '⚡ Run Comparison';
+        }
+
+        // ── Init ─────────────────────────────────────────────────────
+        window.addEventListener('load', () => {
+            loadEpisodes();
+            loadSemantic();
+            loadProcedural();
+            loadRemediation();
+            restoreChatState();
+            updateChatSuggestion();
+        });
+    </script>
+</body>
+</html>

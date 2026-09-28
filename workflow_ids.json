@@ -1,0 +1,6 @@
+{
+  "episodic": "generate-episodic-memory-2",
+  "semantic": "generate-semantic-memory-3",
+  "procedural": "generate-procedural-memory",
+  "agent": "elastic-ai-agent"
+}

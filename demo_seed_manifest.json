@@ -1,0 +1,19 @@
+{
+  "episodic_ids": {
+    "alice_chen": [
+      "ac1c22e7-8956-4e3b-a451-2fc38f23f7de",
+      "2969fd97-f204-49c9-9ddb-06e595a75178",
+      "bf7e8929-f4f2-4d6f-a011-bab94fc9e261"
+    ],
+    "bob_smith": [
+      "a29926fa-8f0a-452f-82bc-d14ecdaa50cd",
+      "18e65d52-af5b-46bd-b782-e2c0dd8bd19a",
+      "7c8bdd16-838b-44aa-a785-2f3e424163fd"
+    ],
+    "carol_johnson": [
+      "9b32c4dc-419f-4f94-96a8-0602da3e47cb",
+      "cf434466-4f1c-47f5-9d99-6622075e5405",
+      "1cb2c716-e89a-46b7-b88b-be2202b4200f"
+    ]
+  }
+}

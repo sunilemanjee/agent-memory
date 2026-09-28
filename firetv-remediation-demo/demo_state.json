@@ -1,0 +1,170 @@
+{
+  "conversations": [
+    {
+      "conversation_id": "7213c14e-b589-4521-a42f-b0428090d5c8",
+      "user_id": "jordan_price",
+      "user_name": "Jordan Price",
+      "convo_index": 1,
+      "issue_context": "power_failure",
+      "session_date": "2026-07-28T10:00:00Z"
+    },
+    {
+      "conversation_id": "6a151557-48ac-4c28-a583-49c73580f682",
+      "user_id": "jordan_price",
+      "user_name": "Jordan Price",
+      "convo_index": 2,
+      "issue_context": "power_failure",
+      "session_date": "2026-07-30T11:30:00Z"
+    },
+    {
+      "conversation_id": "dcdf77e6-8ff2-4224-ba57-f2089a975f0a",
+      "user_id": "jordan_price",
+      "user_name": "Jordan Price",
+      "convo_index": 3,
+      "issue_context": "power_failure",
+      "session_date": "2026-08-02T09:15:00Z"
+    },
+    {
+      "conversation_id": "0cba9385-6c25-4c3d-9c03-00f82460c7ca",
+      "user_id": "jordan_price",
+      "user_name": "Jordan Price",
+      "convo_index": 4,
+      "issue_context": "power_failure",
+      "session_date": "2026-08-05T14:45:00Z"
+    },
+    {
+      "conversation_id": "20ef0bfd-bb95-4b2c-84d6-2ee4cce2093d",
+      "user_id": "morgan_lee",
+      "user_name": "Morgan Lee",
+      "convo_index": 1,
+      "issue_context": "remote_network",
+      "session_date": "2026-09-10T13:00:00Z"
+    },
+    {
+      "conversation_id": "c8a77496-e671-4866-9c62-1623711f4c5e",
+      "user_id": "morgan_lee",
+      "user_name": "Morgan Lee",
+      "convo_index": 2,
+      "issue_context": "remote_network",
+      "session_date": "2026-09-14T16:20:00Z"
+    },
+    {
+      "conversation_id": "4074cbd4-3d74-4372-9a97-a95d62ea0ffc",
+      "user_id": "priya_nair",
+      "user_name": "Priya Nair",
+      "convo_index": 1,
+      "issue_context": "app_crash",
+      "session_date": "2026-09-01T08:40:00Z"
+    },
+    {
+      "conversation_id": "bf05032b-71f1-4e81-b5b2-57de90371cad",
+      "user_id": "priya_nair",
+      "user_name": "Priya Nair",
+      "convo_index": 2,
+      "issue_context": "app_crash",
+      "session_date": "2026-09-03T09:10:00Z"
+    }
+  ],
+  "workflows": [
+    {
+      "type": "episodic",
+      "conversation_id": "7213c14e-b589-4521-a42f-b0428090d5c8",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "episodic",
+      "conversation_id": "6a151557-48ac-4c28-a583-49c73580f682",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "episodic",
+      "conversation_id": "dcdf77e6-8ff2-4224-ba57-f2089a975f0a",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "episodic",
+      "conversation_id": "0cba9385-6c25-4c3d-9c03-00f82460c7ca",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "episodic",
+      "conversation_id": "20ef0bfd-bb95-4b2c-84d6-2ee4cce2093d",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "episodic",
+      "conversation_id": "c8a77496-e671-4866-9c62-1623711f4c5e",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "episodic",
+      "conversation_id": "4074cbd4-3d74-4372-9a97-a95d62ea0ffc",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "episodic",
+      "conversation_id": "bf05032b-71f1-4e81-b5b2-57de90371cad",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "semantic",
+      "user_id": "jordan_price",
+      "entity_name": "power_failure",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "semantic",
+      "user_id": "morgan_lee",
+      "entity_name": "remote_pairing",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "semantic",
+      "user_id": "morgan_lee",
+      "entity_name": "streaming_lag",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "semantic",
+      "user_id": "priya_nair",
+      "entity_name": "app_crash",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "procedural",
+      "user_id": "jordan_price",
+      "procedure_context": "power_failure",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "procedural",
+      "user_id": "morgan_lee",
+      "procedure_context": "remote_network",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "procedural",
+      "user_id": "priya_nair",
+      "procedure_context": "app_crash",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "remediation",
+      "user_id": "jordan_price",
+      "issue_context": "power_failure",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "remediation",
+      "user_id": "morgan_lee",
+      "issue_context": "remote_network",
+      "execution_id": "unknown"
+    },
+    {
+      "type": "remediation",
+      "user_id": "priya_nair",
+      "issue_context": "app_crash",
+      "execution_id": "unknown"
+    }
+  ]
+}
