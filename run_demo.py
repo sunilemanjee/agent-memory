@@ -16,6 +16,8 @@ import json
 import time
 import requests
 
+import entity_clustering
+
 KB_URL = os.environ.get("ES_URL", "").replace(".es.", ".kb.")
 API_KEY = os.environ.get("ES_ADMIN_API_KEY")
 
@@ -135,25 +137,6 @@ PROCEDURAL_CONTEXTS = {
         "vendor_evaluation",
         "tco_calculation",
         "hybrid_search_setup",
-    ],
-}
-
-# Entity clusters for semantic memory distillation
-ENTITY_CLUSTERS = {
-    "alice_chen": [
-        ("vector_search", "concept"),
-        ("serverless_pricing", "product"),
-        ("python_client", "product"),
-    ],
-    "bob_smith": [
-        ("solr_migration", "concept"),
-        ("cluster_architecture", "concept"),
-        ("monitoring_alerting", "concept"),
-    ],
-    "carol_johnson": [
-        ("competitive_analysis", "concept"),
-        ("cost_estimation", "concept"),
-        ("elser_semantic_search", "product"),
     ],
 }
 
@@ -365,10 +348,11 @@ def main():
     print("Phase 3: Triggering generate-semantic-memory workflow\n")
     print("  (Each workflow: searches episodic memories → AI distills → indexes to ES)\n")
 
-    for user_id, entities in ENTITY_CLUSTERS.items():
+    for user_id in [u["user_id"] for u in DEMO_USERS]:
         user_name = next(
             u["user_name"] for u in DEMO_USERS if u["user_id"] == user_id
         )
+        entities = entity_clustering.get_current_entity_clusters(user_id)
         print(f"  User: {user_name}")
         for entity_name, entity_type in entities:
             exec_id = trigger_semantic_workflow(

@@ -1,0 +1,403 @@
+{
+  "semantic_memory": {
+    "alice_chen": {
+      "alice_chen_ranks": {
+        "entity_id": "alice_chen_ranks",
+        "entity_name": "ranks",
+        "entity_type": "concept",
+        "user_id": "alice_chen",
+        "user_name": "Alice Chen",
+        "facts": "Alice Chen's tracked conversations do not contain any information specifically about \"ranks,\" including topics like document ranking, the `rank_feature` or `rank_eval` functionality, or BM25 relevance scoring. Instead, her recorded conversation history focuses on async bulk indexing of vector embeddings using elasticsearch-py. These discussions cover throughput tuning, error handling strategies, chunk sizing for bulk operations, and configuration of `dense_vector` and `semantic_text` fields. No factual statements can currently be made about what Alice knows or needs regarding ranking-related Elasticsearch features based on this history. If she raises questions on ranking or relevance scoring in the future, that information has not yet surfaced in her tracked conversations.",
+        "last_updated": "2026-07-12T03:55:24Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1613",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "1e876ac6-c35f-43c4-b709-54d729ac8e07"
+      },
+      "alice_chen_langchain_s": {
+        "entity_id": "alice_chen_langchain_s",
+        "entity_name": "langchain_s",
+        "entity_type": "product",
+        "user_id": "alice_chen",
+        "user_name": "Alice Chen",
+        "facts": "Alice's knowledge history contains no content related to LangChain, its integrations, or related orchestration/retrieval tooling. Instead, all ten summarized conversations focus on async bulk indexing of vector embeddings using the elasticsearch-py client (AsyncBulkClient/async_bulk). These cover batching and chunk sizing strategies for high-dimensional vectors, throughput benchmarking, timeout and retry tuning, HNSW/dense_vector index configuration, and error-handling/backpressure strategies for large-scale ingestion pipelines (2M\u201350M documents). Alice's demonstrated expertise and needs center specifically on elasticsearch-py's native async APIs rather than any LangChain-based framework. If Alice has separate needs specifically about LangChain, no record of that exists in this history and clarification would be needed to address it.",
+        "last_updated": "2026-07-15T14:45:29Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1613",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "6a4b8ef5-85d5-4dea-a850-4e2aa11cdf25"
+      },
+      "alice_chen_model_version": {
+        "entity_id": "alice_chen_model_version",
+        "entity_name": "model_version",
+        "entity_type": "concept",
+        "user_id": "alice_chen",
+        "user_name": "Alice Chen",
+        "facts": "Based on Alice Chen's recorded conversation history, there is no information indicating she has discussed \"model_version\" or any related concept such as embedding model versioning. All of her documented exchanges instead center on async bulk indexing patterns in elasticsearch-py for large-scale vector embedding ingestion, spanning workloads from 2 million daily embeddings to 50 million total embeddings. These discussions cover configuration of AsyncBulkClient and AsyncBulkIndexer, optimal chunk sizing for 768- and 1536-dimensional vectors, throughput benchmarking, and retry/backoff strategies for resilient bulk operations. She has also addressed dense_vector field mapping choices to support cosine similarity search at scale. Since no summarized exchange references model versioning in any form, no factual statement can be made about her knowledge or needs on that specific topic without fabricating information not present in her history.",
+        "last_updated": "2026-07-14T06:51:26Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1613",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "2e3992be-21e5-4855-b03f-bf9b9057ec0d"
+      },
+      "alice_chen_jina": {
+        "entity_id": "alice_chen_jina",
+        "entity_name": "jina",
+        "entity_type": "organization",
+        "user_id": "alice_chen",
+        "user_name": "Alice Chen",
+        "facts": "Alice Chen's documented conversation history contains no evidence that she has discussed or asked about \"jina,\" including Jina AI embeddings or related integrations. Her known activity instead centers exclusively on async bulk indexing with elasticsearch-py, including configuration of AsyncBulkClient and AsyncElasticsearch. She has focused on chunk sizing and throughput tuning for vector embeddings across various dimensions (768, 1536, and others), along with error handling and retry strategies for bulk operations. She has also worked on dense_vector and semantic_text field mapping to support large-scale vector search workloads ranging from 2 million to over 50 million documents. No factual claims can currently be made about her knowledge of or needs related to Jina specifically, as this topic does not appear anywhere in her available conversation summaries.",
+        "last_updated": "2026-09-16T10:08:36Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1613",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "95547583-de6e-4c56-a7fa-ee749997873b"
+      },
+      "alice_chen_p50": {
+        "entity_id": "alice_chen_p50",
+        "entity_name": "p50",
+        "entity_type": "concept",
+        "user_id": "alice_chen",
+        "user_name": "Alice Chen",
+        "facts": "Alice has not directly discussed p50 latency metrics in her conversation history; her sessions have instead focused on async bulk indexing performance for vector embeddings using elasticsearch-py, particularly for high-volume ingestion workloads spanning 2M-50M embeddings across various vector dimensionalities. She has explored related performance indicators, including expected throughput benchmarks ranging from 5K-15K up to 50K-150K docs/sec depending on vector dimensionality and workload size. She was also advised on general metrics to track for performance monitoring, such as backpressure and failure tracking, which would encompass p50 measurements without addressing them explicitly. She has not yet asked for or received specific guidance on interpreting or optimizing p50 (median) latency figures for her indexing or query operations. Given her focus on high-throughput ingestion, she would likely benefit from further guidance on measuring p50 indexing latency alongside the throughput and error-handling strategies already covered.",
+        "last_updated": "2026-08-14T03:46:31Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1613",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "1188b5df-ae0d-4ab2-8dcb-b63a56f8a5f8"
+      },
+      "alice_chen_normalized": {
+        "entity_id": "alice_chen_normalized",
+        "entity_name": "normalized",
+        "entity_type": "concept",
+        "user_id": "alice_chen",
+        "user_name": "Alice Chen",
+        "facts": "Alice Chen's conversation history does not contain any discussion specifically addressing vector \"normalization\" as a distinct topic; her recorded sessions instead focus on async bulk indexing of vector embeddings using elasticsearch-py. She has closely adjacent knowledge, however, having discussed dense_vector field mapping and cosine similarity search configurations for embedding pipelines spanning multiple dimensionalities (768, 1536, and others), a context in which normalized vectors are typically relevant. She has also covered embedding dimension validation practices, including pre-validation of embedding dimensions prior to indexing to catch mismatches. There is no evidence she has asked about or received guidance on normalization techniques specifically, such as L2 normalization or the trade-offs between dot_product and cosine similarity. Her established expertise remains centered on bulk indexing throughput, error handling, and retry strategies, with normalization itself representing an unexplored area relative to her prior conversations.",
+        "last_updated": "2026-07-08T05:11:23Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1613",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "2fde3370-330e-467c-a120-1305a06a4536"
+      },
+      "alice_chen_serverless": {
+        "entity_id": "alice_chen_serverless",
+        "entity_name": "serverless",
+        "entity_type": "concept",
+        "user_id": "alice_chen",
+        "user_name": "Alice Chen",
+        "facts": "Alice Chen's documented conversation history focuses entirely on async bulk indexing of vector embeddings using elasticsearch-py, working with AsyncBulkClient/async_bulk and AsyncElasticsearch across workloads ranging from 500K to 50M documents. Her technical work has centered on throughput tuning (chunk_size, thread_count, concurrency levels), error handling and retry strategies, connection pooling, dense_vector/HNSW configuration, and exactly-once indexing semantics. None of her provided summaries mention Elastic Cloud Serverless or serverless architecture in general, and there is no evidence she has previously asked about or received guidance on Elastic's serverless offering. Should she need information on serverless \u2014 for example, how it affects index settings like refresh_interval or replicas that she has tuned for bulk indexing, or its compatibility with her AsyncBulkClient workflows \u2014 this would represent a new topic requiring fresh research rather than a continuation of prior coverage.",
+        "last_updated": "2026-07-15T06:39:51Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1613",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "49aff049-be4e-4949-ae9c-7ad4785157aa"
+      },
+      "alice_chen_chunk_size": {
+        "entity_id": "alice_chen_chunk_size",
+        "entity_name": "chunk_size",
+        "entity_type": "concept",
+        "user_id": "alice_chen",
+        "user_name": "Alice Chen",
+        "facts": "Alice has repeatedly explored chunk_size tuning for async bulk indexing in elasticsearch-py across multiple vector embedding workloads, ranging from 500K docs/day up to 50M total embeddings with 768, 1536, and other dimensional vectors. She understands chunk_size as one of several key tuning parameters\u2014alongside thread_count, refresh_interval, and timeout settings\u2014that jointly affect bulk indexing throughput, which can vary widely from 5K to 150K docs/sec depending on configuration. She has learned that chunk sizing must be balanced with memory optimization, connection pooling, and concurrency levels (3-5 concurrent tasks recommended), but she still lacks concrete, workload-specific chunk_size values or formulas tailored to her actual vector dimensionality and daily ingestion volume, since guidance so far has been general rather than definitive. She also still needs clarity on how chunk_size interacts with CPU-bound bottlenecks and HNSW-specific settings like ef_construction when optimizing for her specific embedding scale.",
+        "last_updated": "2026-07-21T11:59:44Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1613",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "781d914e-72aa-4dbb-a98f-02f0b56522d8"
+      }
+    },
+    "bob_smith": {
+      "bob_smith_pagerduty": {
+        "entity_id": "bob_smith_pagerduty",
+        "entity_name": "pagerduty",
+        "entity_type": "product",
+        "user_id": "bob_smith",
+        "user_name": "Bob Smith",
+        "facts": "No documented conversations with Bob Smith mention PagerDuty, alerting integrations, or incident management tooling. The available history covers only Elasticsearch cluster architecture, shard allocation, node sizing, data tiering, and migration planning from Solr. There is no evidence that Bob has knowledge of, or a stated need for, PagerDuty. Consequently, no factual summary about PagerDuty can be produced from the current conversation history.",
+        "last_updated": "2026-09-07T03:58:39Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1612",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "3b6c6fc6-0b2c-469e-b8bb-791a47bd4090"
+      },
+      "bob_smith_slm": {
+        "entity_id": "bob_smith_slm",
+        "entity_name": "slm",
+        "entity_type": "concept",
+        "user_id": "bob_smith",
+        "user_name": "Bob Smith",
+        "facts": "Bob has not yet directly discussed Snapshot Lifecycle Management (SLM), but he has substantial related context that will inform its setup, including a solid understanding of ILM policies, hot-warm-cold tiering, and node attribute-based data placement for his Solr-to-Elasticsearch migrations across cluster sizing scenarios ranging from 500GB to 2TB+ of data. He knows that searchable snapshots can deliver 50-80% storage reduction with transparent cross-tier querying, which is directly relevant to designing an SLM-backed cold/frozen tier. He has defined recovery objectives (1-hour RPO, 4-hour RTO) for at least one cluster design, indicating a concrete need for automated snapshot policies to meet those backup and restore targets. Bob still needs specific guidance on configuring SLM policies\u2014covering snapshot frequency, retention, repository setup, and integration with his existing ILM hot-warm-cold tiering\u2014to operationalize backups for his multi-terabyte, high-ingest Elasticsearch clusters.",
+        "last_updated": "2026-08-07T12:25:18Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1612",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "88f26c0a-08fd-4338-ae18-c440da538a8b"
+      },
+      "bob_smith_follower": {
+        "entity_id": "bob_smith_follower",
+        "entity_name": "follower",
+        "entity_type": "concept",
+        "user_id": "bob_smith",
+        "user_name": "Bob Smith",
+        "facts": "Bob has not directly discussed Elasticsearch \"follower\" indices or follower node roles in his conversation history, but he touched on adjacent territory while exploring multi-datacenter query routing for his 2TB Solr-to-Elasticsearch migration. In that discussion, the support agent recommended a cross-cluster search pattern with per-datacenter replication via cross-cluster replication (CCR) rather than full index duplication, which inherently relies on leader/follower index pairing, giving Bob implicit but undocumented exposure to the concept. His known cluster context includes 50M+ documents, roughly 2TB of data spread across multiple datacenters, and a stated preference for replication-based rather than duplicated indices. He has not yet had a deep-dive into follower index creation, soft-deletes retention settings, or follower read/write behavior. What he still needs is concrete guidance on implementing the CCR strategy he was pointed toward \u2014 specifically enabling CCR, configuring remote clusters, monitoring replication lag, and handling failover or promotion of a follower index to a regular index.",
+        "last_updated": "2026-09-18T10:22:40Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1612",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "0d71cf80-3716-4175-9dad-76e66e1dad54"
+      },
+      "bob_smith_certificates": {
+        "entity_id": "bob_smith_certificates",
+        "entity_name": "certificates",
+        "entity_type": "concept",
+        "user_id": "bob_smith",
+        "user_name": "Bob Smith",
+        "facts": "No documented conversations with Bob Smith (bob_smith) address certificates, TLS/SSL configuration, or security credentials. His tracked discussions instead focus on Elasticsearch cluster architecture, shard allocation, node sizing, data tiering, and migration planning from Solr. There is no factual basis in his conversation history to characterize his knowledge, needs, or preferences regarding certificates. This topic has not yet been covered and would need to be treated as a new, separate discussion if certificate-related guidance is required.",
+        "last_updated": "2026-09-23T04:53:52Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1612",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "a593c333-f87f-423f-9d3f-72c2321c4ad4"
+      },
+      "bob_smith_copyfield": {
+        "entity_id": "bob_smith_copyfield",
+        "entity_name": "copyfield",
+        "entity_type": "concept",
+        "user_id": "bob_smith",
+        "user_name": "Bob Smith",
+        "facts": "Bob has not yet discussed or received guidance on Solr's copyField functionality or its Elasticsearch equivalents (such as multi-fields, ingest pipeline processors like `set`/`append`, or combined text fields) in any documented conversation. His recorded discussions to date have centered on cluster architecture, shard allocation, node sizing, ILM/tiering, and overall migration strategy for his Solr-to-Elasticsearch migration involving 50M+ documents. Given the scale and nature of this migration, it is likely he will need to address copyField replication at some point, since Solr's copyField is commonly used to consolidate multiple source fields into a single searchable field. However, there is currently no evidence of prior exposure, questions, or guidance on this specific topic, so his existing knowledge level regarding copyField cannot be characterized. This remains an open gap to address proactively as his migration planning progresses.",
+        "last_updated": "2026-09-16T18:29:11Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1612",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "eddd4729-0126-49e9-afb0-087f2cf0395d"
+      },
+      "bob_smith_fleet": {
+        "entity_id": "bob_smith_fleet",
+        "entity_name": "fleet",
+        "entity_type": "concept",
+        "user_id": "bob_smith",
+        "user_name": "Bob Smith",
+        "facts": "Bob Smith has no documented interactions regarding Fleet, Elastic Agent, or agent-based data collection and management. His conversation history is instead concentrated on Solr-to-Elasticsearch migration topics, including cluster architecture, shard allocation, node sizing, and ILM hot-warm-cold tiering strategies, along with capacity planning considerations. No records indicate he has asked about or received guidance on Fleet server setup, agent policies, integrations, or fleet-managed deployments. Consequently, no factual summary of his knowledge, preferences, or needs specific to Fleet can currently be constructed from available data. Should Bob raise questions about Fleet in the future, this would represent an entirely new topic area not previously covered in his interaction history, distinct from his established focus on migration and cluster tiering architecture.",
+        "last_updated": "2026-07-31T02:21:41Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1612",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "6e4f1ae8-c909-44ce-9678-3f0de83ed5fc"
+      },
+      "bob_smith_replica": {
+        "entity_id": "bob_smith_replica",
+        "entity_name": "replica",
+        "entity_type": "concept",
+        "user_id": "bob_smith",
+        "user_name": "Bob Smith",
+        "facts": "Bob is planning a large-scale Solr-to-Elasticsearch migration (50M+ documents, ranging from 250GB to 2TB+) and has received replica-related guidance across multiple architecture discussions. For his initial 6-primary-shard, 5-6 node design, a single replica per primary shard was recommended to balance resilience with resource use, and he still needs guidance on how replica counts should scale as the cluster grows from 6-9 nodes up to larger 20-30 data-node deployments. In the context of multi-datacenter query routing, cross-cluster replication (per-DC replication) was recommended over full index duplication to keep data synchronized across regions without duplicating entire indices. Bob still needs to understand how replica placement interacts with hot-warm-cold tiering, availability-zone awareness, and his RPO/RTO targets (1-hour RPO, 4-hour RTO). He would also benefit from concrete guidance on replica count trade-offs for his rolling 24-hour to 90-day retention windows and how those choices affect indexing throughput and storage capacity planning.",
+        "last_updated": "2026-07-22T04:59:53Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1612",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "30c18cbf-6420-458e-9692-3f837f1e2b77"
+      },
+      "bob_smith_fetch": {
+        "entity_id": "bob_smith_fetch",
+        "entity_name": "fetch",
+        "entity_type": "concept",
+        "user_id": "bob_smith",
+        "user_name": "Bob Smith",
+        "facts": "Bob's documented history centers on Solr-to-Elasticsearch migration work, including cluster architecture, shard allocation, node sizing, ILM/data tiering, and capacity planning. None of his summarized conversations have addressed \"fetch\" in the Elasticsearch sense\u2014there is no discussion of the fetch phase of search execution, _mget/_search fetch behavior, fetch_size settings, or related fetch performance tuning. Bob has stated performance targets of p99 aggregation latency under 500ms and peak throughput of 500-800 QPS, which suggests fetch-phase performance could become relevant as he optimizes query execution, though this connection has not yet been explored with him. No documented knowledge or stated need exists regarding fetch-related topics specifically, so additional context or a direct conversation on search/query execution internals would be needed to assess his requirements in this area.",
+        "last_updated": "2026-09-13T23:33:49Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1612",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "ebb73e59-7116-47a0-8175-8d83cda42b52"
+      }
+    },
+    "carol_johnson": {
+      "carol_johnson_growth": {
+        "entity_id": "carol_johnson_growth",
+        "entity_name": "growth",
+        "entity_type": "concept",
+        "user_id": "carol_johnson",
+        "user_name": "Carol Johnson",
+        "facts": "Carol has repeatedly modeled Elasticsearch total cost of ownership across growth stages (10k, 100k, and 1M+ documents), consistently finding Elastic Cloud more cost-effective for lean startup teams than self-managed deployments once hidden operational labor (0.5-1.5 FTE, roughly 40-60% of self-managed spend) is factored in, with the inflection point favoring self-managed typically falling between 1M and 10M documents depending on existing DevOps capacity. She understands the licensing landscape shaping this tradeoff (SSPL for SaaS use cases, X-Pack for compliance features like HIPAA) and knows vendor lock-in risk is mitigated by Elasticsearch's portable data formats but still shaped by architectural choices such as abstraction layers and separating query logic from infrastructure. Her recommended growth strategy is to start on Elastic Cloud and stay flexible to migrate at the 6-12 month mark as team size and document volume scale, while proactively planning indexing and architecture patterns (ILM, shard strategy, modular indices) to avoid costly refactoring later. She also brings competitive context, having favorably compared Elasticsearch's scaling economics and aggregation capabilities against Algolia and Typesense at the 500K-document scale. Given her specific constraint of contractual data residency requirements that necessitate self-managed deployment, she now needs guidance on managing growth within that self-managed environment, potentially leveraging Elastic's support subscription and training offerings to offset the operational burden self-managed scaling otherwise entails.",
+        "last_updated": "2026-08-14T14:25:35Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1614",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "9549744f-7149-4404-82ab-db9f07b9275c"
+      },
+      "carol_johnson_cloud": {
+        "entity_id": "carol_johnson_cloud",
+        "entity_name": "cloud",
+        "entity_type": "concept",
+        "user_id": "carol_johnson",
+        "user_name": "Carol Johnson",
+        "facts": "Carol Johnson has extensively evaluated Elastic Cloud versus self-managed Elasticsearch for a startup SaaS context, concluding that Cloud is typically more cost-effective for lean teams (often a 3-person engineering team) until scale reaches roughly 1-10M documents, since self-managed operational overhead (0.5-1.5 FTE, ~$5-6k/month) largely offsets its lower licensing costs, while Cloud pricing runs about $1-3K/month for her use case with annual commitments and startup program discounts further reducing costs. She recognizes that data/query portability makes starting on Cloud a low-risk choice with the option to migrate later, that Cloud creates no hard vendor lock-in for core Elasticsearch since data formats and queries remain portable, and that commercial/X-Pack features require licensing regardless of deployment model \u2014 with snapshot practices and abstraction layers advised to preserve migration flexibility. Her HIPAA compliance needs are addressable via X-Pack on either platform, but her actual contractual data residency obligations necessitate self-managed deployment, leading her toward a hybrid approach combining self-managed infrastructure with Elastic's support subscription and training to mitigate operational risk. Remaining needs include finalizing architectural patterns (ILM, shard strategy, modular indices) upfront and determining the precise inflection point for revisiting Cloud vs. self-managed as her document volume and DevOps capacity grow.",
+        "last_updated": "2026-07-28T17:55:49Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1614",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "66c72035-45f7-49be-88d9-bb2d10d69f03"
+      },
+      "carol_johnson_es_java_opts": {
+        "entity_id": "carol_johnson_es_java_opts",
+        "entity_name": "es_java_opts",
+        "entity_type": "concept",
+        "user_id": "carol_johnson",
+        "user_name": "Carol Johnson",
+        "facts": "Carol Johnson has not discussed ES_JAVA_OPTS, JVM heap configuration, -Xms/-Xmx sizing, garbage collection tuning, or any Java runtime options for Elasticsearch nodes in her reviewed conversation history. Her discussions to date have instead focused on total cost of ownership, self-hosted versus managed deployment tradeoffs, vendor lock-in, licensing/compliance, and competitive analysis against Algolia and Typesense. Given her stated self-managed deployment considerations\u2014handling roughly 2TB/month of logs, HIPAA compliance, and contractual data residency requirements\u2014she would likely need guidance on ES_JAVA_OPTS for heap sizing and JVM tuning if she moves forward with self-managed infrastructure. No such guidance has been provided yet, and there is currently no factual basis for summarizing her knowledge of this specific topic.",
+        "last_updated": "2026-09-12T23:51:48Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1614",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "aa9d2226-c759-4ef2-bf31-62db0cc88a30"
+      },
+      "carol_johnson_portability": {
+        "entity_id": "carol_johnson_portability",
+        "entity_name": "portability",
+        "entity_type": "concept",
+        "user_id": "carol_johnson",
+        "user_name": "Carol Johnson",
+        "facts": "Carol understands that Elasticsearch's data format and query language are portable across both self-managed and Elastic Cloud deployments, which makes a \"start on Cloud, migrate later\" strategy relatively low-risk. She recognizes, however, that this portability alone does not eliminate vendor lock-in risk, since the real drivers of migration cost are operational choices (Cloud vs. self-managed) and architectural decisions such as abstraction layers, and that the SSPL license imposes specific obligations for SaaS deployments that data portability alone does not address. She has been advised to establish solid snapshot practices and to separate query logic from infrastructure code in order to preserve future flexibility. Because her contractual data residency requirements are pushing her toward self-managed infrastructure, Carol now needs to translate this portability knowledge into a concrete migration/export strategy built around snapshots and abstraction layers. She also needs to identify which features, such as X-Pack and other commercial add-ons, are not portable and require separate licensing regardless of deployment model.",
+        "last_updated": "2026-09-02T11:50:37Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1614",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "6d7e6007-5750-4e5d-8353-3755fff592b8"
+      },
+      "carol_johnson_fintech": {
+        "entity_id": "carol_johnson_fintech",
+        "entity_name": "fintech",
+        "entity_type": "concept",
+        "user_id": "carol_johnson",
+        "user_name": "Carol Johnson",
+        "facts": "Carol Johnson is a startup CTO leading a lean engineering team who has been evaluating Elasticsearch adoption primarily around total cost of ownership, comparing self-hosted versus managed Cloud deployments across document scales ranging from 10k to over 1M documents. Her discussions have covered vendor lock-in concerns, licensing and compliance considerations such as SSPL terms and HIPAA-related data residency obligations, and competitive analysis pitting Elasticsearch against Algolia and Typesense for her SaaS product. While the scale and compliance sensitivity of her evaluation suggest a data-intensive, possibly regulated product, none of the available conversation summaries explicitly confirm a fintech vertical or reference fintech-specific needs such as PCI-DSS or other financial services regulations. No fintech-specific use cases, requirements, or compliance obligations have been identified to date. Additional conversation data explicitly addressing financial services requirements would be needed to produce a meaningful fintech-specific synthesis for Carol Johnson.",
+        "last_updated": "2026-07-08T22:24:12Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1614",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "87f912b0-2dec-41c1-a666-760b095643cd"
+      },
+      "carol_johnson_elser": {
+        "entity_id": "carol_johnson_elser",
+        "entity_name": "elser",
+        "entity_type": "product",
+        "user_id": "carol_johnson",
+        "user_name": "Carol Johnson",
+        "facts": "Carol, a startup CTO, has not discussed ELSER (Elastic Learned Sparse EncodeR) or semantic/vector search in any prior conversations; her documented history centers on total cost of ownership, self-hosted versus managed deployment tradeoffs, vendor lock-in, SSPL licensing/compliance, and competitive comparisons against Algolia and Typesense. There is no evidence she has explored ELSER's functionality, use cases, licensing tier, or infrastructure and compute requirements. Given her established focus on cost control and operational overhead, any future discussion of ELSER should proactively address its resource demands (e.g., dedicated ML node sizing) and licensing implications, framed within her existing Cloud vs. self-managed and SSPL compliance considerations. No specific knowledge, prior exposure, or expressed need regarding ELSER can currently be inferred from her conversation history.",
+        "last_updated": "2026-07-19T00:35:19Z",
+        "confidence_score": 0.85,
+        "total_episodes_analyzed": "1614",
+        "memory_source": "workflow_merge",
+        "workflow_execution_id": "4bd77f87-d28a-4772-9215-555dc479f2c0"
+      }
+    }
+  },
+  "procedural_memory": {
+    "alice_chen": {
+      "alice_chen_knn_benchmarking": {
+        "procedure_id": "alice_chen_knn_benchmarking",
+        "user_id": "alice_chen",
+        "user_name": "Alice Chen",
+        "procedure_context": "knn_benchmarking",
+        "procedure_text": "PROCEDURE_NAME: Elasticsearch kNN Benchmarking Setup\nTRIGGER: Apply this when evaluating or tuning Elasticsearch kNN vector search performance (latency, memory, similarity choice) for a vector search or RAG project at meaningful scale (e.g., ~1M+ vectors).\n\nSTEPS:\n1. Confirm vector characteristics up front: dimensionality, total vector count, and whether vectors are normalized (if normalized, consider dot_product instead of cosine similarity for efficiency).\n2. Choose between approximate (HNSW) and exact kNN based on dataset size and recall needs, and decide on a quantization strategy (int8, int4, or bbq) to reduce memory footprint while preserving acceptable recall.\n3. Build a benchmark index using the actual production vector dimensions, chosen similarity metric, and quantization settings rather than synthetic defaults.\n4. Run representative query workloads against the benchmark index to measure real-world latency, expecting single-digit to low-tens-of-milliseconds performance when properly tuned; compare results across quantization/similarity variants.\n5. For ingestion at scale, use the async Python Elasticsearch client (async_bulk/async_streaming_bulk) with dense_vector mappings, tuning chunk size for throughput; if building a RAG pipeline, integrate via langchain-elasticsearch (ElasticsearchStore) for hybrid retrieval.\n6. Iterate on quantization/similarity/chunk-size settings based on benchmark results before committing to a final production configuration, and factor in ingest volume when estimating Elastic Cloud costs (Serverless consumption-based vs. Hosted resource-based).",
+        "last_refined": "Mon Sep 14 2026 16:00:41 GMT+0000 (Coordinated Universal Time)",
+        "created_from_episodes": "3",
+        "memory_source": "workflow_extraction",
+        "workflow_execution_id": "5fc30109-26e4-4276-a268-d7957caceb08"
+      },
+      "alice_chen_python_bulk_indexing": {
+        "procedure_id": "alice_chen_python_bulk_indexing",
+        "user_id": "alice_chen",
+        "user_name": "Alice Chen",
+        "procedure_context": "python_bulk_indexing",
+        "procedure_text": "PROCEDURE_NAME: Async Python Bulk Vector Indexing\nTRIGGER: Apply this when indexing large volumes of vector/document data into Elasticsearch using the Python client and performance/memory needs to be managed.\n\nSTEPS:\n1. Define the index mapping first, specifying the `dense_vector` field with the correct dimensions, similarity metric (default to `cosine` unless vectors are normalized, in which case consider `dot_product`), and quantization option (int8/int4/bbq) to control memory footprint at scale.\n2. Use the async Elasticsearch client (`AsyncElasticsearch`) with `async_bulk` or `async_streaming_bulk` from `elasticsearch.helpers` rather than synchronous bulk calls, to maximize ingest throughput.\n3. Tune the `chunk_size` parameter based on document/vector payload size and cluster resources \u2014 start with a moderate batch size and adjust based on observed latency and memory usage.\n4. If building a RAG or LangChain-based pipeline, use the `langchain-elasticsearch` package's `ElasticsearchStore` with its async methods, which wraps the same async client and supports hybrid retrieval strategies.\n5. Benchmark actual query latency and indexing throughput using your real vector dimensions and quantization settings before scaling to full production volume (e.g., ~1M+ vectors).",
+        "last_refined": "Mon Sep 14 2026 16:00:50 GMT+0000 (Coordinated Universal Time)",
+        "created_from_episodes": "3",
+        "memory_source": "workflow_extraction",
+        "workflow_execution_id": "40dc4daf-19e9-4de1-9977-4eb3dce907ae"
+      },
+      "alice_chen_serverless_cost_estimation": {
+        "procedure_id": "alice_chen_serverless_cost_estimation",
+        "user_id": "alice_chen",
+        "user_name": "Alice Chen",
+        "procedure_context": "serverless_cost_estimation",
+        "procedure_text": "PROCEDURE_NAME: Elastic Cloud Serverless Cost Estimation\nTRIGGER: Apply this when estimating or investigating the total cost of running a workload on Elastic Cloud (especially Serverless) beyond the base subscription price.\n\nSTEPS:\n1. Identify the deployment type first (Serverless vs. Hosted), since billing models differ fundamentally \u2014 Serverless bills on consumption dimensions while Hosted bills primarily on provisioned resources.\n2. Identify the specific product/solution in use (Elasticsearch, Observability, Security), since ingest, retention, and add-on pricing can vary by product.\n3. For Serverless, enumerate the consumption-based cost dimensions: ingest volume (measured pre-compression on enriched data size), data retention duration, and any optional add-ons (Synthetics, Agent Builder, Workflows, AI/LLM token usage).\n4. Check for workload-specific cost drivers relevant to the use case (e.g., for vector/ML workloads, factor in index size, quantization choice (int8/int4/bbq), and memory footprint, since these affect both performance and resource-driven cost).\n5. Ask the agent to dig into the specific product or deployment type identified in step 1\u20132 for a detailed cost breakdown, rather than relying on general estimates.\n6. If deeper validation is needed, request a benchmark or test setup (e.g., a sample index with real data dimensions/settings) to measure actual resource usage before finalizing cost projections.",
+        "last_refined": "Mon Sep 14 2026 16:00:45 GMT+0000 (Coordinated Universal Time)",
+        "created_from_episodes": "3",
+        "memory_source": "workflow_extraction",
+        "workflow_execution_id": "9890ff98-9623-4f8f-9b74-a6c1da0b20b0"
+      }
+    },
+    "bob_smith": {
+      "bob_smith_cluster_sizing_and_architecture": {
+        "procedure_id": "bob_smith_cluster_sizing_and_architecture",
+        "user_id": "bob_smith",
+        "user_name": "Bob Smith",
+        "procedure_context": "cluster_sizing_and_architecture",
+        "procedure_text": "PROCEDURE_NAME: Elasticsearch Cluster Sizing and Architecture Design\nTRIGGER: Apply this when planning or resizing an Elasticsearch cluster for a given document/data volume that requires high availability and/or tiered time-series storage.\nSTEPS:\n1. Gather requirements: total document/data volume (e.g., ~50M docs), growth rate, query/indexing load, retention needs, and whether high availability (zone/rack awareness) is required.\n2. Design the base topology: determine master/data node counts, shard count and sizing (aim for shards within recommended size limits), replica counts for HA, and zone-aware allocation settings.\n3. If the data is time-series (e.g., logs/metrics), design a hot-warm-cold(-frozen) tiered architecture using data streams, ILM policies to automate phase transitions, and searchable snapshots for cold/frozen tiers to reduce storage cost.\n4. Validate HA at each tier by confirming replica placement, zone awareness, and failover behavior for hot, warm, cold, and frozen nodes separately.\n5. Request concrete artifacts needed to finalize configuration (sample document, field mappings, retention requirements) and generate the actual ILM policy JSON and index template based on those inputs.\n6. Offer to extend the design with operational safeguards (e.g., slowlog monitoring, alerting integrations like PagerDuty) once the architecture is in place, to catch performance issues proactively.",
+        "last_refined": "Thu Sep 10 2026 22:16:25 GMT+0000 (Coordinated Universal Time)",
+        "created_from_episodes": "3",
+        "memory_source": "workflow_extraction",
+        "workflow_execution_id": "629ed139-beeb-4caf-a507-9405d777153d"
+      },
+      "bob_smith_solr_to_elasticsearch_migration": {
+        "procedure_id": "bob_smith_solr_to_elasticsearch_migration",
+        "user_id": "bob_smith",
+        "user_name": "Bob Smith",
+        "procedure_context": "solr_to_elasticsearch_migration",
+        "procedure_text": "PROCEDURE_NAME: Solr to Elasticsearch Migration Playbook\n\nTRIGGER: Apply this procedure whenever migrating a Solr-based search deployment (schema, queries, or config) to Elasticsearch.\n\nSTEPS:\n1. Inventory the Solr schema.xml (or managed-schema) and solrconfig.xml, cataloging field types, copyField/dynamic field rules, uniqueKey, and analyzer chains.\n2. Translate the schema field-by-field into an Elasticsearch mapping: map Solr text/string types to text/keyword, replace copyField with copy_to, set explicit doc_values where needed (since ES defaults differ from Solr), map uniqueKey to _id, and recreate analyzers/tokenizers/filters as custom ES analyzers.\n3. Identify Solr query configs (qf, pf, bq, bf, DisMax/eDisMax settings) and translate them into equivalent Elasticsearch Query DSL \u2014 multi_match for qf/pf, function_score for bf/bq boosting, and query_string where free-form syntax is required.\n4. Validate nested/complex data structures (e.g., multi-valued or hierarchical fields) and convert them into ES nested or object mappings as appropriate, testing sample documents against the new mapping.\n5. Design the target cluster topology sized for the document volume and availability needs (node roles, shard/replica counts, zone-aware allocation), and if the data is time-series/log-oriented, layer in hot-warm-cold tiers with ILM policies and data streams.\n6. Once schema and queries are migrated, set up operational monitoring (slowlogs, Kibana dashboards, alerting rules with connectors like PagerDuty) to validate query performance parity with the old Solr deployment before cutover.",
+        "last_refined": "Thu Sep 10 2026 22:16:21 GMT+0000 (Coordinated Universal Time)",
+        "created_from_episodes": "3",
+        "memory_source": "workflow_extraction",
+        "workflow_execution_id": "5e960b7d-3d26-46ff-83e8-3a0b958d59db"
+      },
+      "bob_smith_slow_query_debugging": {
+        "procedure_id": "bob_smith_slow_query_debugging",
+        "user_id": "bob_smith",
+        "user_name": "Bob Smith",
+        "procedure_context": "slow_query_debugging",
+        "procedure_text": "PROCEDURE_NAME: Elasticsearch Slow Query Debugging\nTRIGGER: Apply this when Elasticsearch search or indexing operations show latency spikes or slow response times that need root-cause diagnosis and resolution.\n\nSTEPS:\n1. Enable and configure search/indexing slowlogs on the affected indices with appropriate threshold settings (e.g., warn/info/debug/trace thresholds) to start capturing which queries are slow and why.\n2. Ship the slowlog output via Elastic Agent or Filebeat into a dedicated monitoring index so the data is queryable and centralized.\n3. Build a Kibana dashboard over the slowlog data to visualize slow query frequency, latency distribution, and affected indices/shards, and cross-check cluster health via Stack Monitoring or AutoOps for shard sizing, node load, and hot-spot imbalances.\n4. Correlate findings against cluster architecture (shard count/size, replica allocation, zone-aware allocation, hot-warm-cold tiering) to identify whether slowness stems from oversharding, undersized nodes, or misplaced data tiers.\n5. Set up an alerting rule on slow-query thresholds and wire it to a notification connector (e.g., PagerDuty) using trigger/acknowledge/resolve actions so future spikes are caught proactively.\n6. Once root cause is identified (e.g., inefficient query DSL, missing mappings/analyzers, poor doc_values/field type choices), revise the query or mapping (drawing on schema/query translation knowledge such as multi_match, function_score tuning) and validate the fix by monitoring the slowlog and dashboard for improvement.",
+        "last_refined": "Thu Sep 10 2026 22:16:29 GMT+0000 (Coordinated Universal Time)",
+        "created_from_episodes": "3",
+        "memory_source": "workflow_extraction",
+        "workflow_execution_id": "ddc1b5c4-fb56-43c2-b7ed-5231d9629ffb"
+      }
+    },
+    "carol_johnson": {
+      "carol_johnson_tco_calculation": {
+        "procedure_id": "carol_johnson_tco_calculation",
+        "user_id": "carol_johnson",
+        "user_name": "Carol Johnson",
+        "procedure_context": "tco_calculation",
+        "procedure_text": "PROCEDURE_NAME: Elastic Search TCO Estimation\nTRIGGER: Apply this when evaluating the total cost of ownership for an Elastic-based (or competing) search/AI solution before committing to an architecture or vendor.\n\nSTEPS:\n1. Define the scale and use case first (data volume, e.g. ~100k documents/products, query patterns like full-text + filtering + semantic search) so cost comparisons are grounded in a concrete workload rather than generic pricing.\n2. Prototype for free using a local setup (e.g. start-local) to validate the architecture and query design before incurring any cloud spend.\n3. Compare deployment/vendor options on cost-control and flexibility, not just sticker price \u2014 weigh self-managed (Elasticsearch/OpenSearch) usage-based or serverless billing against bolt-on/managed vendors (e.g. Algolia) that trade lower engineering effort for higher per-unit or lock-in costs.\n4. Identify and minimize hidden external costs, especially third-party embedding/inference APIs (e.g. OpenAI) \u2014 prefer native/integrated options (e.g. semantic_text with Elastic's Inference Service or ELSER) to avoid extra per-call charges and separate vendor bills.\n5. Start with a minimal architecture (single index, no tiering/HA, default hybrid retrieval like RRF combining BM25 + vector/kNN) and only add cost-adding complexity (replicas, tiering, reranking, dedicated inference hosting) once actual scale or performance data justifies it.\n6. Re-evaluate the TCO estimate as scale grows by revisiting steps 3-4 (deployment tier, embedding costs) whenever query volume, data size, or feature needs (e.g. reranking, quantization) materially change.",
+        "last_refined": "2026-08-21T16:10:00Z",
+        "created_from_episodes": "3",
+        "memory_source": "workflow_extraction",
+        "workflow_execution_id": "bf0b5d7e-af52-4e56-a247-333cfaeb77d8"
+      },
+      "carol_johnson_hybrid_search_setup": {
+        "procedure_id": "carol_johnson_hybrid_search_setup",
+        "user_id": "carol_johnson",
+        "user_name": "Carol Johnson",
+        "procedure_context": "hybrid_search_setup",
+        "procedure_text": "PROCEDURE_NAME: Elasticsearch Hybrid Search Setup\nTRIGGER: Apply this when designing or implementing a search system that needs to combine keyword/BM25 relevance with semantic/vector search in Elasticsearch.\n\nSTEPS:\n1. Choose your embedding strategy: use ELSER (sparse_vector) for explainable, Elastic-hosted semantic search, or dense embeddings (e.g., OpenAI) via kNN if you need a specific external model \u2014 or combine both for maximum recall.\n2. Simplify ingestion by mapping semantic fields with `semantic_text` and Elastic's Inference Service where possible, avoiding manual embedding pipelines and external API costs unless a specific non-Elastic model is required.\n3. Build the retriever query using an RRF (Reciprocal Rank Fusion) retriever that combines a `sparse_vector` (ELSER) query and/or a dense kNN query with a standard BM25 lexical query in a single request.\n4. Tune fusion parameters \u2014 set `rank_window_size` (candidates considered per sub-query) and `rank_constant` (weighting/smoothing in RRF) based on result quality testing against representative queries.\n5. Start small and validate cheaply: prototype locally (e.g., with start-local) or on a single minimal index, compare hybrid results against pure BM25/pure vector baselines, then scale infrastructure (Elastic Cloud Serverless, tiering, HA) only once the approach is validated.\n6. Document the final mapping/query structure and use it as a template for future indices or use cases (e.g., product search, knowledge base, chatbot) to speed up subsequent hybrid search setups.",
+        "last_refined": "2026-09-05T09:45:00Z",
+        "created_from_episodes": "3",
+        "memory_source": "workflow_extraction",
+        "workflow_execution_id": "1ea362f9-e478-403e-a99d-d7445010914d"
+      },
+      "carol_johnson_vendor_evaluation": {
+        "procedure_id": "carol_johnson_vendor_evaluation",
+        "user_id": "carol_johnson",
+        "user_name": "Carol Johnson",
+        "procedure_context": "vendor_evaluation",
+        "procedure_text": "PROCEDURE_NAME: Search/AI Vendor Evaluation Framework\n\nTRIGGER: Apply this when comparing Elastic against alternative vendors or technologies (e.g., Algolia, OpenSearch, OpenAI) for a search, AI, or infrastructure decision.\n\nSTEPS:\n1. Define the concrete use case and constraints first \u2014 data scale (e.g., ~100k records), budget level, required capabilities (full-text, filtering, semantic/vector search), and team engineering capacity.\n2. Identify the core architectural differentiators for each candidate (e.g., unified hybrid search vs. bolt-on AI add-ons, sparse vs. dense embeddings, self-hosted vs. managed pricing model) rather than comparing on features alone.\n3. Map Elastic-specific capabilities relevant to the use case (hybrid search via RRF, `semantic_text`, built-in Inference Service, quantization/reranking) against what each alternative requires as separate tooling or vendor lock-in.\n4. Weigh cost-control and flexibility (self-managed/open architecture, usage-based Serverless billing) against lower-engineering-effort managed alternatives, based on the stated budget and team constraints.\n5. Prototype cheaply before committing: start local (e.g., start-local) or with a minimal single-index setup, test the actual data/query patterns, and only scale infrastructure (tiering, HA, dedicated embedding models) once real usage demands it.\n6. Request a concrete next-step artifact (e.g., sample index mapping, hybrid query example, tuning parameters like rank_window_size/rank_constant) to validate the choice against real data before finalizing the vendor decision.",
+        "last_refined": "2026-08-30T11:20:00Z",
+        "created_from_episodes": "3",
+        "memory_source": "workflow_extraction",
+        "workflow_execution_id": "3f7c633b-a074-4471-aad4-e26e0b35785d"
+      }
+    }
+  }
+}

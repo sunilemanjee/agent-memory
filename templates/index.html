@@ -7,7 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
         * {
             margin: 0;
@@ -615,6 +616,60 @@
             display: block;
         }
 
+        /* Episode preview modal */
+        .episode-modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .episode-modal-backdrop.show {
+            display: flex;
+        }
+        .episode-modal {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            max-width: 640px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .episode-modal-close {
+            position: absolute;
+            top: 0.75rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .episode-modal-close:hover {
+            color: var(--text-primary);
+        }
+        .episode-modal-section-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1rem 0 0.4rem;
+        }
+        .episode-modal-raw {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .header {
@@ -1001,10 +1056,20 @@
         <button class="tab-button" data-tab="search">🔍 Memory Search</button>
         <button class="tab-button" data-tab="recall">🔎 Memory Recall</button>
         <button class="tab-button" data-tab="comparison">🧪 Memory Demo</button>
+        <button class="tab-button" data-tab="clusters">🔬 Entity Clusters</button>
+        <button class="tab-button" data-tab="graph">🕸️ Episode Relationships</button>
     </div>
 
     <!-- Error Banner -->
     <div class="error-banner" id="error-banner"></div>
+
+    <!-- Episode Preview Modal -->
+    <div class="episode-modal-backdrop" id="episode-modal-backdrop">
+        <div class="episode-modal">
+            <button class="episode-modal-close" id="episode-modal-close">&times;</button>
+            <div id="episode-modal-body"></div>
+        </div>
+    </div>
 
     <!-- Content -->
     <div class="content">
@@ -1014,7 +1079,7 @@
 
                 <div class="arch-intro">
                     <h2 style="margin:0 0 0.4rem; font-size:1.3rem;">How Agent Memory Works</h2>
-                    <p style="margin:0; color:var(--text-secondary); font-size:0.92rem;">One conversation → four Kibana Workflows → three memory layers. All stored and retrieved natively in Elasticsearch.</p>
+                    <p style="margin:0; color:var(--text-secondary); font-size:0.92rem;">One conversation → episodic workflow → the matching semantic entity → three memory layers. Entities are computed, not scripted: Jina clustering embeddings + <code>significant_text</code> discover each user's topics from their own conversation history.</p>
                 </div>
 
                 <!-- Trigger -->
@@ -1026,7 +1091,7 @@
                     </div>
                     <div class="arch-arrow-down">↓ <span>⚡ Save to Agent Memory</span></div>
 
-                    <!-- Row of 4 workflows -->
+                    <!-- Row of 2 workflows -->
                     <div class="arch-workflows-row">
                         <div class="arch-wf-card arch-wf-episodic">
                             <div class="arch-wf-title">📅 Episodic Workflow</div>
@@ -1038,12 +1103,12 @@
                             <div class="arch-wf-embed">semantic_text auto-embeds via Jina v5</div>
                         </div>
                         <div class="arch-wf-card arch-wf-semantic">
-                            <div class="arch-wf-title">🧠 Semantic Workflow ×3</div>
+                            <div class="arch-wf-title">🧠 Semantic Workflow — matched entity only</div>
                             <ol class="arch-wf-steps">
-                                <li>Fetch all user's episodic memories</li>
-                                <li>AI distills 3–5 facts per knowledge entity</li>
-                                <li>Embed facts → kNN search existing memories</li>
-                                <li>Similarity &gt; 0.75 → merge · else → create</li>
+                                <li>Embed this conversation (Jina <code>task=clustering</code>)</li>
+                                <li>Cosine-match against this user's cached cluster centroids</li>
+                                <li>Fire only for the best-matching entity(ies) — not every cached topic</li>
+                                <li>AI distills 3–5 facts, merges with existing knowledge</li>
                                 <li>Index → <code>semantic_memory</code></li>
                             </ol>
                             <div class="arch-wf-embed">semantic_text auto-embeds via Jina v5</div>
@@ -1085,16 +1150,16 @@
                 <!-- Key facts -->
                 <div class="arch-facts">
                     <div class="arch-fact">
-                        <span class="arch-fact-icon">⚡</span>
-                        <div><strong>4 Workflows</strong><br><span>1 episodic + 3 semantic fire from one button</span></div>
+                        <span class="arch-fact-icon">🧬</span>
+                        <div><strong>Unsupervised entity clusters</strong><br><span>Jina <code>task=clustering</code> embeddings + <code>significant_text</code> — no hardcoded topic list</span></div>
+                    </div>
+                    <div class="arch-fact">
+                        <span class="arch-fact-icon">🎯</span>
+                        <div><strong>Relevance-gated updates</strong><br><span>Only the entity a conversation actually matches gets refreshed, not every cached topic</span></div>
                     </div>
                     <div class="arch-fact">
                         <span class="arch-fact-icon">🔍</span>
                         <div><strong>semantic_text field</strong><br><span>Elasticsearch auto-embeds at index time — no ingest pipeline</span></div>
-                    </div>
-                    <div class="arch-fact">
-                        <span class="arch-fact-icon">🧬</span>
-                        <div><strong>Smart merge</strong><br><span>kNN similarity check prevents duplicate entities</span></div>
                     </div>
                     <div class="arch-fact">
                         <span class="arch-fact-icon">🏗️</span>
@@ -1104,6 +1169,7 @@
 
             </div>
         </div>
+
 
         <!-- Tab 1: Live Chat -->
         <div class="tab-content" id="chat">
@@ -1374,6 +1440,77 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Tab: Entity Clusters -->
+        <div class="tab-content" id="clusters">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="number" id="clusters-count">0</div>
+                    <div class="label">Clusters</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="clusters-total-episodes">0</div>
+                    <div class="label">Episodes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="clusters-noise-pct">0%</div>
+                    <div class="label">Noise Ratio</div>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>User:</label>
+                    <select id="clusters-user-filter">
+                        <option value="alice_chen">Alice Chen</option>
+                        <option value="bob_smith">Bob Smith</option>
+                        <option value="carol_johnson" selected>Carol Johnson</option>
+                    </select>
+                </div>
+                <button class="refresh-btn" onclick="loadClusters()" title="Refresh">↻ Refresh</button>
+                <button class="refresh-btn" onclick="recomputeClusters()" title="Recompute from scratch" id="recompute-clusters-btn">⚙ Recompute Clusters</button>
+                <button class="refresh-btn" onclick="resetClustersView()" title="Reset camera">⤢ Reset View</button>
+            </div>
+
+            <div style="background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:0.5rem; margin-bottom:1rem; position:relative;">
+                <div id="clusters-3d" style="width:100%; height:500px; cursor:grab;"></div>
+                <div id="clusters-tooltip" style="display:none; position:absolute; pointer-events:none; background:rgba(20,20,30,0.95); color:#fff; padding:0.5rem 0.7rem; border-radius:6px; font-size:0.78rem; max-width:280px; z-index:10;"></div>
+            </div>
+            <div id="clusters-legend" style="display:flex; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem; font-size:0.8rem;"></div>
+
+            <div id="clusters-table-content"></div>
+        </div>
+
+        <!-- Tab: Episode Relationships -->
+        <div class="tab-content" id="graph">
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>User:</label>
+                    <select id="graph-user-filter">
+                        <option value="">All</option>
+                        <option value="alice_chen">Alice Chen</option>
+                        <option value="bob_smith">Bob Smith</option>
+                        <option value="carol_johnson">Carol Johnson</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Max nodes:</label>
+                    <select id="graph-limit-filter">
+                        <option value="150">150</option>
+                        <option value="300" selected>300</option>
+                        <option value="600">600</option>
+                    </select>
+                </div>
+                <button class="refresh-btn" onclick="loadEpisodeGraph()" title="Refresh">↻ Refresh</button>
+                <button class="refresh-btn" onclick="resetGraphView()" title="Reset pan/zoom">⤢ Reset View</button>
+            </div>
+
+            <div style="background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:0.5rem; margin-bottom:1rem; position:relative;">
+                <div id="graph-3d" style="width:100%; height:640px; cursor:grab;"></div>
+                <div id="graph-tooltip" style="display:none; position:absolute; pointer-events:none; background:rgba(20,20,30,0.95); color:#fff; padding:0.5rem 0.7rem; border-radius:6px; font-size:0.78rem; max-width:280px; z-index:10;"></div>
+            </div>
+            <div id="graph-status" style="color:var(--text-secondary); font-size:0.85rem;"></div>
         </div>
     </div>
 
@@ -1804,6 +1941,11 @@
         // ── End chat functions ───────────────────────────────────────
 
         // Tab switching
+        const lazyTabLoaders = {
+            clusters: () => loadClusters(),
+            graph: () => loadEpisodeGraph(),
+        };
+        const loadedTabs = new Set();
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.addEventListener('click', () => {
                 const tab = btn.getAttribute('data-tab');
@@ -1811,11 +1953,15 @@
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 btn.classList.add('active');
                 document.getElementById(tab).classList.add('active');
+                if (lazyTabLoaders[tab] && !loadedTabs.has(tab)) {
+                    loadedTabs.add(tab);
+                    lazyTabLoaders[tab]();
+                }
             });
         });
 
         // Filter listeners for episodic
-        document.getElementById('episodic-user-filter').addEventListener('change', renderEpisodes);
+        document.getElementById('episodic-user-filter').addEventListener('change', loadEpisodes);
         document.getElementById('episodic-valence-filter').addEventListener('change', renderEpisodes);
         document.getElementById('episodic-sort').addEventListener('change', renderEpisodes);
 
@@ -1827,10 +1973,68 @@
             setTimeout(() => banner.classList.remove('show'), 5000);
         }
 
+        // Episode preview modal (shared by Entity Clusters + Episode Relationships tabs)
+        async function showEpisodePreview(id) {
+            const backdrop = document.getElementById('episode-modal-backdrop');
+            const body = document.getElementById('episode-modal-body');
+            body.innerHTML = '<p style="color:var(--text-secondary);">Loading…</p>';
+            backdrop.classList.add('show');
+            try {
+                const response = await fetch(`/api/episodes/${encodeURIComponent(id)}`);
+                const episode = await response.json();
+                if (episode.error) throw new Error(episode.error);
+
+                const valence_emoji = episode.emotional_valence === 'positive' ? '😊' : episode.emotional_valence === 'negative' ? '😟' : '😐';
+                const date = episode.session_date ? new Date(episode.session_date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+                const topics = Array.isArray(episode.topics) ? episode.topics : (episode.topics || '').split(',').map(s => s.trim()).filter(Boolean);
+                const entities = Array.isArray(episode.key_entities) ? episode.key_entities : (episode.key_entities || '').split(',').map(s => s.trim()).filter(Boolean);
+                const actionItems = Array.isArray(episode.action_items) ? episode.action_items : (episode.action_items || '').split(',').map(s => s.trim()).filter(Boolean);
+
+                body.innerHTML = `
+                    <div class="card-header">
+                        <div class="avatar ${avatarClass(episode)}">${initials(episode)}</div>
+                        <div class="card-header-info">
+                            <div class="name">${displayUser(episode)}</div>
+                            <div class="date">${date}</div>
+                        </div>
+                        <div class="topic-badge">${topics[0] || 'General'}</div>
+                    </div>
+                    <div class="card-summary">${episode.summary || ''}</div>
+                    <div class="tags">${entities.map(e => `<span class="tag">${e}</span>`).join('')}</div>
+                    <div class="footer-section">
+                        <span class="valence-icon">${valence_emoji}</span>
+                        <span class="score-item"><span class="stars">★</span> ${(episode.importance_score ?? 0).toFixed(1)}</span>
+                    </div>
+                    ${actionItems.length ? `
+                        <div class="episode-modal-section-label">Action Items</div>
+                        <div class="tags">${actionItems.map(a => `<span class="tag">${a}</span>`).join('')}</div>
+                    ` : ''}
+                    <div class="episode-modal-section-label">Full Conversation</div>
+                    <div class="episode-modal-raw">${episode.raw_conversation_text || '(not recorded)'}</div>
+                `;
+            } catch (error) {
+                body.innerHTML = `<p style="color:#f87171;">Error loading episode: ${error.message}</p>`;
+            }
+        }
+
+        function closeEpisodeModal() {
+            document.getElementById('episode-modal-backdrop').classList.remove('show');
+        }
+
+        document.getElementById('episode-modal-close').addEventListener('click', closeEpisodeModal);
+        document.getElementById('episode-modal-backdrop').addEventListener('click', (evt) => {
+            if (evt.target.id === 'episode-modal-backdrop') closeEpisodeModal();
+        });
+        document.addEventListener('keydown', (evt) => {
+            if (evt.key === 'Escape') closeEpisodeModal();
+        });
+
         // Load episodic data
         async function loadEpisodes() {
             try {
-                const response = await fetch('/api/episodes');
+                const userFilter = document.getElementById('episodic-user-filter').value;
+                const url = userFilter ? `/api/episodes?user_id=${userFilter}` : '/api/episodes';
+                const response = await fetch(url);
                 if (!response.ok) throw new Error('Failed to load episodes');
                 episodic_data = await response.json();
                 updateEpisodicStats();
@@ -2506,6 +2710,476 @@ ${results.procedural && results.procedural.length > 0
             });
         }
         // ── End Memory Comparison functions ─────────────────────────
+
+        // ── Entity Clusters tab ──────────────────────────────────────
+        const CLUSTER_COLORS = ['#60a5fa', '#f472b6', '#34d399', '#fbbf24', '#a78bfa', '#f87171', '#22d3ee', '#facc15', '#fb923c', '#818cf8'];
+        const PCA_SCALE = 150;
+
+        function clusterColor(label, allLabels) {
+            if (label === 'noise') return 'rgba(148,163,184,0.35)';
+            const idx = allLabels.indexOf(label);
+            return CLUSTER_COLORS[idx % CLUSTER_COLORS.length];
+        }
+
+        async function loadClusters() {
+            const userId = document.getElementById('clusters-user-filter').value;
+            const statusEl = document.getElementById('clusters-table-content');
+            try {
+                const response = await fetch(`/api/clusters?user_id=${encodeURIComponent(userId)}`);
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                renderClusters(data);
+            } catch (error) {
+                statusEl.innerHTML = '<span style="color:#f87171;">Error loading clusters: ' + error.message + '</span>';
+            }
+        }
+
+        async function recomputeClusters() {
+            const userId = document.getElementById('clusters-user-filter').value;
+            const btn = document.getElementById('recompute-clusters-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Computing…';
+            try {
+                const response = await fetch(`/api/clusters/compute?user_id=${encodeURIComponent(userId)}`, { method: 'POST' });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                await loadClusters();
+            } catch (error) {
+                showError('Error computing clusters: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '⚙ Recompute Clusters';
+            }
+        }
+
+        let clustersScene = null, clustersCamera = null, clustersRenderer = null, clustersControls = null;
+        let clustersAnimHandle = null, clustersSharedGeometry = null;
+        let clustersMeshes = [];
+
+        function resetClustersView() {
+            if (!clustersCamera || !clustersControls) return;
+            clustersCamera.position.set(0, 0, 350);
+            clustersControls.target.set(0, 0, 0);
+            clustersControls.update();
+        }
+
+        function teardownClustersScene() {
+            if (clustersAnimHandle) cancelAnimationFrame(clustersAnimHandle);
+            clustersAnimHandle = null;
+            clustersMeshes.forEach(m => m.mesh.material.dispose());
+            if (clustersSharedGeometry) { clustersSharedGeometry.dispose(); clustersSharedGeometry = null; }
+            if (clustersRenderer) {
+                clustersRenderer.dispose();
+                const container = document.getElementById('clusters-3d');
+                if (container) container.innerHTML = '';
+            }
+            clustersMeshes = [];
+            clustersScene = null; clustersCamera = null; clustersRenderer = null; clustersControls = null;
+        }
+
+        function renderClusters(data) {
+            const clusters = data.clusters || [];
+            const projection = data.projection || {};
+            document.getElementById('clusters-count').textContent = clusters.length;
+            document.getElementById('clusters-total-episodes').textContent = data.total_episodes || 0;
+            const points = Object.entries(projection).map(([id, p]) => ({ ...p, id }));
+            const noiseCount = points.filter(p => p.cluster_label === 'noise').length;
+            const noisePct = points.length ? Math.round(100 * noiseCount / points.length) : 0;
+            document.getElementById('clusters-noise-pct').textContent = noisePct + '%';
+
+            const tableEl = document.getElementById('clusters-table-content');
+            if (data.status === 'insufficient_data' || (!clusters.length && !points.length)) {
+                tableEl.innerHTML = '<p style="color:var(--text-secondary);">No clusters computed yet for this user. Click "Recompute Clusters".</p>';
+            } else if (!clusters.length) {
+                tableEl.innerHTML = '<p style="color:var(--text-secondary);">All episodes classified as noise — try recomputing once more episodes exist.</p>';
+            } else {
+                tableEl.innerHTML = `
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                        <thead><tr style="text-align:left; border-bottom:1px solid var(--border-color);">
+                            <th style="padding:0.5rem;">Cluster</th>
+                            <th style="padding:0.5rem;">Type</th>
+                            <th style="padding:0.5rem;">Significant Terms</th>
+                            <th style="padding:0.5rem;">Members</th>
+                        </tr></thead>
+                        <tbody>
+                        ${clusters.map(c => `
+                            <tr style="border-bottom:1px solid var(--border-color);">
+                                <td style="padding:0.5rem; font-weight:600;">${c.entity_name}</td>
+                                <td style="padding:0.5rem;">${c.entity_type}</td>
+                                <td style="padding:0.5rem; color:var(--text-secondary);">${(c.significant_terms || []).join(', ')}</td>
+                                <td style="padding:0.5rem;">${c.member_count}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>`;
+            }
+
+            const allLabels = clusters.map(c => c.entity_name);
+            const legendLabels = noiseCount ? [...allLabels, 'noise'] : allLabels;
+            document.getElementById('clusters-legend').innerHTML = legendLabels.map(label => `
+                <span style="display:flex; align-items:center; gap:0.35rem;">
+                    <span style="width:10px; height:10px; border-radius:50%; background:${clusterColor(label, allLabels)}; display:inline-block;"></span>
+                    ${label}
+                </span>`).join('');
+
+            teardownClustersScene();
+            const container = document.getElementById('clusters-3d');
+            if (!points.length) return;
+
+            const width = container.clientWidth, height = container.clientHeight;
+            clustersScene = new THREE.Scene();
+            clustersCamera = new THREE.PerspectiveCamera(50, width / height, 0.1, 5000);
+            clustersCamera.position.set(0, 0, 350);
+            clustersRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            clustersRenderer.setSize(width, height);
+            container.appendChild(clustersRenderer.domElement);
+
+            clustersScene.add(new THREE.AmbientLight(0xffffff, 0.9));
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            dirLight.position.set(1, 1, 1);
+            clustersScene.add(dirLight);
+
+            clustersControls = new THREE.OrbitControls(clustersCamera, clustersRenderer.domElement);
+            clustersControls.enableDamping = true;
+            clustersControls.dampingFactor = 0.1;
+            clustersControls.target.set(0, 0, 0);
+            clustersControls.autoRotate = true;
+            clustersControls.autoRotateSpeed = 1.2;
+            clustersControls.addEventListener('start', () => { clustersControls.autoRotate = false; });
+
+            clustersSharedGeometry = new THREE.SphereGeometry(1.2, 12, 12);
+            points.forEach(p => {
+                const label = p.cluster_label || 'noise';
+                const material = new THREE.MeshStandardMaterial({ color: new THREE.Color(clusterColor(label, allLabels)) });
+                const mesh = new THREE.Mesh(clustersSharedGeometry, material);
+                mesh.position.set(p.x * PCA_SCALE, p.y * PCA_SCALE, (p.z || 0) * PCA_SCALE);
+                if (label !== 'noise') mesh.scale.setScalar(1.4);
+                clustersScene.add(mesh);
+                clustersMeshes.push({ mesh, id: p.id, topic: p.topic, cluster_label: label });
+            });
+
+            const raycaster = new THREE.Raycaster();
+            const pointerVec = new THREE.Vector2();
+            const tooltip = document.getElementById('clusters-tooltip');
+            let downPos = null, moved = 0;
+
+            function pickMesh(evt) {
+                const rect = clustersRenderer.domElement.getBoundingClientRect();
+                pointerVec.x = ((evt.clientX - rect.left) / rect.width) * 2 - 1;
+                pointerVec.y = -((evt.clientY - rect.top) / rect.height) * 2 + 1;
+                raycaster.setFromCamera(pointerVec, clustersCamera);
+                const hits = raycaster.intersectObjects(clustersMeshes.map(m => m.mesh));
+                if (!hits.length) return null;
+                return clustersMeshes.find(m => m.mesh === hits[0].object);
+            }
+
+            clustersRenderer.domElement.addEventListener('pointerdown', (evt) => {
+                clustersControls.autoRotate = false;
+                downPos = { x: evt.clientX, y: evt.clientY };
+                moved = 0;
+            });
+            clustersRenderer.domElement.addEventListener('pointermove', (evt) => {
+                if (downPos) {
+                    moved += Math.abs(evt.clientX - downPos.x) + Math.abs(evt.clientY - downPos.y);
+                    downPos = { x: evt.clientX, y: evt.clientY };
+                }
+                if (evt.buttons) { tooltip.style.display = 'none'; return; }
+                const hit = pickMesh(evt);
+                clustersRenderer.domElement.style.cursor = hit ? 'pointer' : 'grab';
+                if (hit) {
+                    const rect = clustersRenderer.domElement.getBoundingClientRect();
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (evt.clientX - rect.left + 12) + 'px';
+                    tooltip.style.top = (evt.clientY - rect.top + 12) + 'px';
+                    tooltip.innerHTML = `<strong>${hit.cluster_label}</strong><br>${hit.topic || ''}`;
+                } else {
+                    tooltip.style.display = 'none';
+                }
+            });
+            clustersRenderer.domElement.addEventListener('pointerup', (evt) => {
+                if (downPos && moved < 4) {
+                    const hit = pickMesh(evt);
+                    if (hit) showEpisodePreview(hit.id);
+                }
+                downPos = null;
+            });
+            clustersRenderer.domElement.addEventListener('pointerleave', () => {
+                tooltip.style.display = 'none';
+            });
+
+            function animate() {
+                clustersAnimHandle = requestAnimationFrame(animate);
+                clustersControls.update();
+                clustersRenderer.render(clustersScene, clustersCamera);
+            }
+            animate();
+        }
+
+        document.getElementById('clusters-user-filter').addEventListener('change', loadClusters);
+        // ── End Entity Clusters tab ──────────────────────────────────
+
+        // ── Episode Relationships tab ────────────────────────────────
+        const GRAPH_WORLD = 1000;
+        let graphNodes = [];
+        let graphEdges = [];
+        let graphScene = null, graphCamera = null, graphRenderer = null, graphControls = null;
+        let graphAnimHandle = null, graphSharedGeometry = null, graphEdgeLines = null;
+        let graphNodeMeshes = [];
+        let graphIterations = 0;
+        const graphMaxIterations = 220;
+
+        function resetGraphView() {
+            if (!graphCamera || !graphControls) return;
+            graphCamera.position.set(0, 0, 1400);
+            graphControls.target.set(0, 0, 0);
+            graphControls.update();
+        }
+
+        async function loadEpisodeGraph() {
+            const userId = document.getElementById('graph-user-filter').value;
+            const limit = document.getElementById('graph-limit-filter').value;
+            const statusEl = document.getElementById('graph-status');
+            statusEl.textContent = 'Loading episode graph…';
+            try {
+                const response = await fetch(`/api/episode_graph?user_id=${encodeURIComponent(userId)}&limit=${limit}`);
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                statusEl.textContent = `${data.nodes.length} episodes, ${data.edges.length} relationships (top-k similarity).`;
+                initGraph(data.nodes, data.edges);
+            } catch (error) {
+                statusEl.innerHTML = '<span style="color:#f87171;">Error loading graph: ' + error.message + '</span>';
+            }
+        }
+
+        function teardownGraphScene() {
+            if (graphAnimHandle) cancelAnimationFrame(graphAnimHandle);
+            graphAnimHandle = null;
+            graphNodeMeshes.forEach(m => m.mesh.material.dispose());
+            if (graphSharedGeometry) { graphSharedGeometry.dispose(); graphSharedGeometry = null; }
+            if (graphEdgeLines) { graphEdgeLines.geometry.dispose(); graphEdgeLines.material.dispose(); graphEdgeLines = null; }
+            if (graphRenderer) {
+                graphRenderer.dispose();
+                const container = document.getElementById('graph-3d');
+                if (container) container.innerHTML = '';
+            }
+            graphNodeMeshes = [];
+            graphScene = null; graphCamera = null; graphRenderer = null; graphControls = null;
+        }
+
+        function updateGraphEdgeGeometry() {
+            const positions = graphEdgeLines.geometry.attributes.position.array;
+            graphEdges.forEach((e, i) => {
+                const a = graphNodes[e.source], b = graphNodes[e.target];
+                positions[i * 6] = a.x; positions[i * 6 + 1] = a.y; positions[i * 6 + 2] = a.z;
+                positions[i * 6 + 3] = b.x; positions[i * 6 + 4] = b.y; positions[i * 6 + 5] = b.z;
+            });
+            graphEdgeLines.geometry.attributes.position.needsUpdate = true;
+        }
+
+        function initGraph(nodes, edges) {
+            teardownGraphScene();
+            const container = document.getElementById('graph-3d');
+            const width = container.clientWidth, height = container.clientHeight;
+
+            graphNodes = nodes.map(n => ({
+                ...n,
+                x: (Math.random() - 0.5) * GRAPH_WORLD,
+                y: (Math.random() - 0.5) * GRAPH_WORLD,
+                z: (Math.random() - 0.5) * GRAPH_WORLD,
+                vx: 0, vy: 0, vz: 0,
+            }));
+            const idx = {};
+            graphNodes.forEach((n, i) => idx[n.id] = i);
+            graphEdges = edges
+                .filter(e => idx[e.source] !== undefined && idx[e.target] !== undefined)
+                .map(e => ({ source: idx[e.source], target: idx[e.target], weight: e.weight }));
+
+            graphScene = new THREE.Scene();
+            graphCamera = new THREE.PerspectiveCamera(50, width / height, 0.1, 5000);
+            graphCamera.position.set(0, 0, 1400);
+            graphRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            graphRenderer.setSize(width, height);
+            container.appendChild(graphRenderer.domElement);
+
+            graphScene.add(new THREE.AmbientLight(0xffffff, 0.9));
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            dirLight.position.set(1, 1, 1);
+            graphScene.add(dirLight);
+
+            graphControls = new THREE.OrbitControls(graphCamera, graphRenderer.domElement);
+            graphControls.enableDamping = true;
+            graphControls.dampingFactor = 0.1;
+            graphControls.target.set(0, 0, 0);
+            graphControls.autoRotate = true;
+            graphControls.autoRotateSpeed = 1.2;
+            graphControls.addEventListener('start', () => { graphControls.autoRotate = false; });
+
+            const allLabels = [...new Set(graphNodes.map(n => n.cluster_label).filter(l => l !== 'noise'))];
+            graphSharedGeometry = new THREE.SphereGeometry(1, 10, 10);
+            graphNodes.forEach(node => {
+                const r = 1.5 + Math.min(3, (node.importance_score || 5) * 0.3);
+                const material = new THREE.MeshStandardMaterial({ color: new THREE.Color(clusterColor(node.cluster_label, allLabels)) });
+                const mesh = new THREE.Mesh(graphSharedGeometry, material);
+                mesh.scale.setScalar(r);
+                mesh.position.set(node.x, node.y, node.z);
+                graphScene.add(mesh);
+                graphNodeMeshes.push({ mesh, node });
+            });
+
+            const edgePositions = new Float32Array(graphEdges.length * 6);
+            const edgeGeometry = new THREE.BufferGeometry();
+            edgeGeometry.setAttribute('position', new THREE.BufferAttribute(edgePositions, 3));
+            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.25 });
+            graphEdgeLines = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+            graphScene.add(graphEdgeLines);
+            updateGraphEdgeGeometry();
+
+            graphIterations = 0;
+            setupGraphInteraction();
+
+            function physicsTick() {
+                const n = graphNodes.length;
+                if (n === 0) return;
+                for (let i = 0; i < n; i++) {
+                    for (let j = i + 1; j < n; j++) {
+                        const a = graphNodes[i], b = graphNodes[j];
+                        let dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
+                        let dist2 = dx * dx + dy * dy + dz * dz || 0.01;
+                        let force = 6000 / dist2;
+                        let dist = Math.sqrt(dist2);
+                        dx /= dist; dy /= dist; dz /= dist;
+                        a.vx += dx * force; a.vy += dy * force; a.vz += dz * force;
+                        b.vx -= dx * force; b.vy -= dy * force; b.vz -= dz * force;
+                    }
+                }
+                graphEdges.forEach(e => {
+                    const a = graphNodes[e.source], b = graphNodes[e.target];
+                    let dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+                    let dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.01;
+                    const targetDist = 70;
+                    const force = (dist - targetDist) * 0.02 * e.weight;
+                    dx /= dist; dy /= dist; dz /= dist;
+                    a.vx += dx * force; a.vy += dy * force; a.vz += dz * force;
+                    b.vx -= dx * force; b.vy -= dy * force; b.vz -= dz * force;
+                });
+                const half = GRAPH_WORLD / 2;
+                graphNodes.forEach(node => {
+                    node.vx += -node.x * 0.001;
+                    node.vy += -node.y * 0.001;
+                    node.vz += -node.z * 0.001;
+                    node.vx *= 0.85; node.vy *= 0.85; node.vz *= 0.85;
+                    node.x += node.vx; node.y += node.vy; node.z += node.vz;
+                    node.x = Math.max(-half, Math.min(half, node.x));
+                    node.y = Math.max(-half, Math.min(half, node.y));
+                    node.z = Math.max(-half, Math.min(half, node.z));
+                });
+                graphNodeMeshes.forEach(m => m.mesh.position.set(m.node.x, m.node.y, m.node.z));
+                updateGraphEdgeGeometry();
+            }
+
+            function animate() {
+                graphAnimHandle = requestAnimationFrame(animate);
+                if (graphIterations < graphMaxIterations) {
+                    physicsTick();
+                    graphIterations++;
+                }
+                graphControls.update();
+                graphRenderer.render(graphScene, graphCamera);
+            }
+            animate();
+        }
+
+        function setupGraphInteraction() {
+            const dom = graphRenderer.domElement;
+            const tooltip = document.getElementById('graph-tooltip');
+            const raycaster = new THREE.Raycaster();
+            const pointerVec = new THREE.Vector2();
+            const dragPlane = new THREE.Plane();
+            const dragPoint = new THREE.Vector3();
+            let draggingNode = null;
+            let downPos = null, moved = 0;
+
+            function pickNode(evt) {
+                const rect = dom.getBoundingClientRect();
+                pointerVec.x = ((evt.clientX - rect.left) / rect.width) * 2 - 1;
+                pointerVec.y = -((evt.clientY - rect.top) / rect.height) * 2 + 1;
+                raycaster.setFromCamera(pointerVec, graphCamera);
+                const hits = raycaster.intersectObjects(graphNodeMeshes.map(m => m.mesh));
+                if (!hits.length) return null;
+                return graphNodeMeshes.find(m => m.mesh === hits[0].object);
+            }
+
+            dom.addEventListener('pointerdown', (evt) => {
+                graphControls.autoRotate = false;
+                downPos = { x: evt.clientX, y: evt.clientY };
+                moved = 0;
+                const hit = pickNode(evt);
+                if (hit) {
+                    draggingNode = hit;
+                    graphControls.enabled = false;
+                    graphIterations = graphMaxIterations;
+                    const camDir = new THREE.Vector3();
+                    graphCamera.getWorldDirection(camDir);
+                    dragPlane.setFromNormalAndCoplanarPoint(camDir, hit.mesh.position);
+                    dom.style.cursor = 'grabbing';
+                }
+            });
+
+            dom.addEventListener('pointermove', (evt) => {
+                if (downPos) {
+                    moved += Math.abs(evt.clientX - downPos.x) + Math.abs(evt.clientY - downPos.y);
+                    downPos = { x: evt.clientX, y: evt.clientY };
+                }
+                if (draggingNode) {
+                    const rect = dom.getBoundingClientRect();
+                    pointerVec.x = ((evt.clientX - rect.left) / rect.width) * 2 - 1;
+                    pointerVec.y = -((evt.clientY - rect.top) / rect.height) * 2 + 1;
+                    raycaster.setFromCamera(pointerVec, graphCamera);
+                    if (raycaster.ray.intersectPlane(dragPlane, dragPoint)) {
+                        draggingNode.node.x = dragPoint.x;
+                        draggingNode.node.y = dragPoint.y;
+                        draggingNode.node.z = dragPoint.z;
+                        draggingNode.mesh.position.copy(dragPoint);
+                        updateGraphEdgeGeometry();
+                    }
+                    tooltip.style.display = 'none';
+                    return;
+                }
+                if (evt.buttons) { tooltip.style.display = 'none'; return; }
+                const hit = pickNode(evt);
+                dom.style.cursor = hit ? 'pointer' : 'grab';
+                if (hit) {
+                    const rect = dom.getBoundingClientRect();
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (evt.clientX - rect.left + 12) + 'px';
+                    tooltip.style.top = (evt.clientY - rect.top + 12) + 'px';
+                    tooltip.innerHTML = `<strong>${hit.node.topic || '(untitled)'}</strong><br>${hit.node.cluster_label} · ${hit.node.user_id}<br>importance: ${hit.node.importance_score}`;
+                } else {
+                    tooltip.style.display = 'none';
+                }
+            });
+
+            dom.addEventListener('pointerup', (evt) => {
+                if (draggingNode) {
+                    if (moved < 4) showEpisodePreview(draggingNode.node.id);
+                    graphControls.enabled = true;
+                }
+                draggingNode = null;
+                downPos = null;
+                dom.style.cursor = 'grab';
+            });
+
+            dom.addEventListener('pointerleave', () => {
+                tooltip.style.display = 'none';
+                if (draggingNode) graphControls.enabled = true;
+                draggingNode = null;
+                downPos = null;
+                dom.style.cursor = 'grab';
+            });
+        }
+
+        document.getElementById('graph-user-filter').addEventListener('change', loadEpisodeGraph);
+        document.getElementById('graph-limit-filter').addEventListener('change', loadEpisodeGraph);
+        // ── End Episode Relationships tab ────────────────────────────
     </script>
 </body>
 </html>

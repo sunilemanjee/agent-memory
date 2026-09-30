@@ -109,5 +109,72 @@ def setup_indices():
     print("\nNext: python3 setup_workflows.py && python3 run_demo.py")
 
 
+CLUSTER_VECTOR_DIMS = 1024
+
+
+def ensure_cluster_support():
+    """Additive setup for dynamic entity clustering — never drops existing data.
+
+    Adds cluster_vector/cluster_id/cluster_label to episodic_memory via
+    put_mapping (safe on an existing index), and creates the entity_clusters
+    cache index if it doesn't exist yet.
+    """
+    es_url = os.environ.get("ES_URL")
+    es_api_key = os.environ.get("ES_ADMIN_API_KEY")
+    if not es_url or not es_api_key:
+        raise ValueError("ES_URL and ES_ADMIN_API_KEY environment variables must be set")
+
+    client = Elasticsearch([es_url], api_key=es_api_key, verify_certs=True)
+
+    print("Adding cluster fields to episodic_memory (additive, non-destructive)...")
+    client.indices.put_mapping(
+        index="episodic_memory",
+        properties={
+            "cluster_vector": {
+                "type": "dense_vector",
+                "dims": CLUSTER_VECTOR_DIMS,
+                "index": True,
+                "similarity": "cosine",
+            },
+            "cluster_id": {"type": "keyword"},
+            "cluster_label": {"type": "keyword"},
+        },
+    )
+    print("  ✓ episodic_memory mapping updated")
+
+    if not client.indices.exists(index="entity_clusters"):
+        print("Creating entity_clusters cache index...")
+        client.indices.create(
+            index="entity_clusters",
+            mappings={
+                "properties": {
+                    "cluster_id":         {"type": "keyword"},
+                    "user_id":            {"type": "keyword"},
+                    "entity_name":        {"type": "keyword"},
+                    "entity_type":        {"type": "keyword"},
+                    "significant_terms":  {"type": "keyword"},
+                    "member_count":       {"type": "integer"},
+                    "centroid_vector": {
+                        "type": "dense_vector",
+                        "dims": CLUSTER_VECTOR_DIMS,
+                        "index": True,
+                        "similarity": "cosine",
+                    },
+                    "computed_at":        {"type": "date"},
+                }
+            },
+        )
+        print("  ✓ Created: entity_clusters")
+    else:
+        print("entity_clusters index already exists — skipping create")
+
+    print("\nCluster support ready.")
+
+
 if __name__ == "__main__":
-    setup_indices()
+    import sys
+    if "--clusters-only" in sys.argv:
+        ensure_cluster_support()
+    else:
+        setup_indices()
+        ensure_cluster_support()

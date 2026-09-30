@@ -35,12 +35,7 @@ SEED_CONV_ID = "c8208ca0-7248-4223-b467-e638f8cd0cc4"
 SEED_COMP_WITHOUT_ID = "c442c461-6d99-4fd5-802d-2a0d531a8f9e"
 SEED_COMP_WITH_ID = "92e06d19-c6b5-42e6-9c72-74d562dc1650"
 
-# Known entity clusters per user — semantic workflows fire for each after episodic
-ENTITY_CLUSTERS = {
-    "alice_chen": [("vector_search", "concept"), ("pricing", "concept"), ("python_client", "product")],
-    "bob_smith": [("solr_migration", "concept"), ("cluster_architecture", "concept"), ("monitoring", "concept")],
-    "carol_johnson": [("competitive_analysis", "concept"), ("cost_estimation", "concept"), ("ai_features", "concept")],
-}
+import entity_clustering
 
 es = Elasticsearch(ES_URL, api_key=ES_API_KEY)
 app = Flask(__name__)
@@ -63,16 +58,34 @@ def index():
 
 @app.route("/api/episodes", methods=["GET"])
 def get_episodes():
-    """List all episodic memories, sorted by session_date descending."""
+    """List episodic memories, sorted by session_date descending.
+    Accepts optional user_id (server-side filter) and size — the UI's user
+    filter used to only slice a small cross-user top-50 fetch client-side,
+    which meant any single persona was starved to whatever sliver of that
+    tiny batch happened to be theirs, making the whole corpus look like it
+    was generated in the same 2-day window."""
     try:
+        user_id = request.args.get("user_id")
+        size = min(int(request.args.get("size", 300)), 1000)
+        query = {"term": {"user_id": user_id}} if user_id else {"match_all": {}}
         result = es.search(
             index="episodic_memory",
+            query=query,
             sort=[{"session_date": {"order": "desc"}}],
-            size=50
+            size=size,
         )
         return jsonify([hit["_source"] for hit in result["hits"]["hits"]])
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/episodes/<doc_id>", methods=["GET"])
+def get_episode(doc_id):
+    try:
+        result = es.get(index="episodic_memory", id=doc_id)
+        return jsonify(result["_source"])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 404
 
 
 @app.route("/api/semantic", methods=["GET"])
@@ -335,8 +348,26 @@ def trigger_episodic_workflow():
             ) if execution_id else None,
         }]
 
-        # Auto-trigger semantic workflows for each entity cluster
-        entities = ENTITY_CLUSTERS.get(user_id, [])
+        # Gate semantic updates to only the entity cluster(s) this conversation
+        # actually matches — fetch the conversation text directly (same endpoint
+        # the episodic workflow itself uses) rather than waiting on the async
+        # workflow to finish indexing, and embed it in the same Jina clustering
+        # space as the cached cluster centroids for a cosine-similarity match.
+        entities = []
+        try:
+            conv_resp = requests.get(
+                f"{KB_URL}/api/agent_builder/conversations/{conversation_id}",
+                headers=kb_headers, timeout=30,
+            )
+            conv = conv_resp.json() if conv_resp.status_code == 200 else {}
+            rounds_text = "\n".join(
+                f"{r.get('input', {}).get('message', '')}\n{r.get('response', {}).get('message', '')}"
+                for r in conv.get("rounds", [])
+            )
+            conv_text = f"{conv.get('title', '')}\n{rounds_text}"[:4000]
+            entities = entity_clustering.get_relevant_entities(user_id, conv_text)
+        except Exception as e:
+            print(f"[entity match error] {e}")
         for entity_name, entity_type in entities:
             try:
                 sem_resp = requests.post(
@@ -413,6 +444,124 @@ def trigger_semantic_workflow():
                 "workflow": "generate-semantic-memory",
             })
         return jsonify({"error": data.get("message", "Workflow failed"), "details": data}), resp.status_code
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/clusters/compute", methods=["POST"])
+def compute_clusters():
+    """Recompute entity clusters for a user from scratch (Jina clustering embeddings + significant_text)."""
+    user_id = request.args.get("user_id") or (request.get_json(silent=True) or {}).get("user_id")
+    if not user_id:
+        return jsonify({"error": "user_id required"}), 400
+    try:
+        return jsonify(entity_clustering.compute_clusters(user_id))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/clusters", methods=["GET"])
+def get_clusters():
+    """Read cached entity clusters + per-episode 2D projection for a user."""
+    user_id = request.args.get("user_id")
+    if not user_id:
+        return jsonify({"error": "user_id required"}), 400
+    try:
+        result = es.search(
+            index="entity_clusters",
+            query={"term": {"user_id": user_id}},
+            size=50,
+            sort=[{"member_count": "desc"}],
+        )
+        clusters = [h["_source"] for h in result["hits"]["hits"]]
+
+        episodes = es.search(
+            index="episodic_memory",
+            query={"term": {"user_id": user_id}},
+            size=1000,
+            _source=["cluster_id", "cluster_label", "cluster_vector", "topic", "session_date"],
+        )
+        hits = episodes["hits"]["hits"]
+        docs_with_vector = [h for h in hits if h["_source"].get("cluster_id")]
+
+        projection = {}
+        vec_hits = [h for h in docs_with_vector if h["_source"].get("cluster_vector")]
+        if len(vec_hits) >= 2:
+            import numpy as np
+            matrix = np.array([h["_source"]["cluster_vector"] for h in vec_hits], dtype=np.float32)
+            norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+            norms[norms == 0] = 1.0
+            unit = matrix / norms
+            centered = unit - unit.mean(axis=0)
+            _, _, vt = np.linalg.svd(centered, full_matrices=False)
+            coords = centered @ vt[:3].T
+            for i, h in enumerate(vec_hits):
+                src = h["_source"]
+                projection[h["_id"]] = {
+                    "x": float(coords[i][0]),
+                    "y": float(coords[i][1]),
+                    "z": float(coords[i][2]),
+                    "cluster_id": src.get("cluster_id"),
+                    "cluster_label": src.get("cluster_label", "noise"),
+                    "topic": src.get("topic"),
+                }
+
+        return jsonify({
+            "user_id": user_id,
+            "clusters": clusters,
+            "projection": projection,
+            "total_episodes": episodes["hits"]["total"]["value"],
+            "clustered_episodes": len(docs_with_vector),
+            "status": "ok" if clusters else "not_computed",
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/episode_graph", methods=["GET"])
+def episode_graph():
+    """Build a sparse kNN similarity graph over episodic memories using cluster_vector."""
+    user_id = request.args.get("user_id")
+    limit = min(int(request.args.get("limit", 300)), 1000)
+    k = min(int(request.args.get("k", 5)), 20)
+    try:
+        query = {"term": {"user_id": user_id}} if user_id else {"match_all": {}}
+        result = es.search(
+            index="episodic_memory",
+            query=query,
+            size=limit,
+            _source=["cluster_vector", "cluster_label", "user_id", "topic", "summary", "importance_score"],
+        )
+        hits = [h for h in result["hits"]["hits"] if h["_source"].get("cluster_vector")]
+
+        nodes = [{
+            "id": h["_id"],
+            "user_id": h["_source"].get("user_id"),
+            "topic": h["_source"].get("topic"),
+            "cluster_label": h["_source"].get("cluster_label", "noise"),
+            "importance_score": h["_source"].get("importance_score", 5.0),
+        } for h in hits]
+
+        edges = []
+        seen_pairs = set()
+        if hits:
+            import numpy as np
+            matrix = np.array([h["_source"]["cluster_vector"] for h in hits], dtype=np.float32)
+            norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+            norms[norms == 0] = 1.0
+            unit = matrix / norms
+            sims = unit @ unit.T
+            n = len(hits)
+            for i in range(n):
+                neighbor_idx = np.argsort(-sims[i])[1:k + 1]
+                for j in neighbor_idx:
+                    pair = tuple(sorted([hits[i]["_id"], hits[j]["_id"]]))
+                    if pair in seen_pairs:
+                        continue
+                    seen_pairs.add(pair)
+                    edges.append({"source": pair[0], "target": pair[1], "weight": float(sims[i][j])})
+
+        return jsonify({"nodes": nodes, "edges": edges})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
