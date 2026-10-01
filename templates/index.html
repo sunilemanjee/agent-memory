@@ -1049,6 +1049,8 @@
     <!-- Tabs -->
     <div class="tabs-container">
         <button class="tab-button active" data-tab="architecture">🏗️ Architecture</button>
+        <button class="tab-button" data-tab="clusters">🔬 Semantic Clusters</button>
+        <button class="tab-button" data-tab="graph">🕸️ Episode Relationships</button>
         <button class="tab-button" data-tab="chat">💬 Live Chat</button>
         <button class="tab-button" data-tab="episodic">📅 Episodic Memory</button>
         <button class="tab-button" data-tab="semantic">🧠 Semantic Memory</button>
@@ -1056,8 +1058,6 @@
         <button class="tab-button" data-tab="search">🔍 Memory Search</button>
         <button class="tab-button" data-tab="recall">🔎 Memory Recall</button>
         <button class="tab-button" data-tab="comparison">🧪 Memory Demo</button>
-        <button class="tab-button" data-tab="clusters">🔬 Entity Clusters</button>
-        <button class="tab-button" data-tab="graph">🕸️ Episode Relationships</button>
     </div>
 
     <!-- Error Banner -->
@@ -1170,6 +1170,77 @@
             </div>
         </div>
 
+
+        <!-- Tab: Semantic Clusters -->
+        <div class="tab-content" id="clusters">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="number" id="clusters-count">0</div>
+                    <div class="label">Clusters</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="clusters-total-episodes">0</div>
+                    <div class="label">Episodes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="clusters-noise-pct">0%</div>
+                    <div class="label">Noise Ratio</div>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>User:</label>
+                    <select id="clusters-user-filter">
+                        <option value="alice_chen">Alice Chen</option>
+                        <option value="bob_smith">Bob Smith</option>
+                        <option value="carol_johnson" selected>Carol Johnson</option>
+                    </select>
+                </div>
+                <button class="refresh-btn" onclick="loadClusters()" title="Refresh">↻ Refresh</button>
+                <button class="refresh-btn" onclick="recomputeClusters()" title="Recompute from scratch" id="recompute-clusters-btn">⚙ Recompute Clusters</button>
+                <button class="refresh-btn" onclick="resetClustersView()" title="Reset camera">⤢ Reset View</button>
+            </div>
+
+            <div style="background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:0.5rem; margin-bottom:1rem; position:relative;">
+                <div id="clusters-3d" style="width:100%; height:500px; cursor:grab;"></div>
+                <div id="clusters-tooltip" style="display:none; position:absolute; pointer-events:none; background:rgba(20,20,30,0.95); color:#fff; padding:0.5rem 0.7rem; border-radius:6px; font-size:0.78rem; max-width:280px; z-index:10;"></div>
+            </div>
+            <div id="clusters-legend" style="display:flex; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem; font-size:0.8rem;"></div>
+
+            <div id="clusters-table-content"></div>
+        </div>
+
+        <!-- Tab: Episode Relationships -->
+        <div class="tab-content" id="graph">
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>User:</label>
+                    <select id="graph-user-filter">
+                        <option value="">All</option>
+                        <option value="alice_chen">Alice Chen</option>
+                        <option value="bob_smith">Bob Smith</option>
+                        <option value="carol_johnson">Carol Johnson</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Max nodes:</label>
+                    <select id="graph-limit-filter">
+                        <option value="150">150</option>
+                        <option value="300" selected>300</option>
+                        <option value="600">600</option>
+                    </select>
+                </div>
+                <button class="refresh-btn" onclick="loadEpisodeGraph()" title="Refresh">↻ Refresh</button>
+                <button class="refresh-btn" onclick="resetGraphView()" title="Reset pan/zoom">⤢ Reset View</button>
+            </div>
+
+            <div style="background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:0.5rem; margin-bottom:1rem; position:relative;">
+                <div id="graph-3d" style="width:100%; height:640px; cursor:grab;"></div>
+                <div id="graph-tooltip" style="display:none; position:absolute; pointer-events:none; background:rgba(20,20,30,0.95); color:#fff; padding:0.5rem 0.7rem; border-radius:6px; font-size:0.78rem; max-width:280px; z-index:10;"></div>
+            </div>
+            <div id="graph-status" style="color:var(--text-secondary); font-size:0.85rem;"></div>
+        </div>
 
         <!-- Tab 1: Live Chat -->
         <div class="tab-content" id="chat">
@@ -1420,6 +1491,7 @@
                         <span class="comp-badge without-badge">🚫 Without Memory</span>
                         <span id="comp-without-timer" style="font-size:0.75rem; color:var(--text-secondary); font-variant-numeric:tabular-nums;"></span>
                     </div>
+                    <div id="comp-without-tokens" style="padding:0 1rem; font-size:0.7rem; color:var(--text-secondary); font-variant-numeric:tabular-nums;"></div>
                     <div class="comp-response" id="comp-without-response">
                         <div class="comp-loading">Asking agent...</div>
                     </div>
@@ -1430,6 +1502,7 @@
                         <span class="comp-badge with-badge">🧠 With Memory</span>
                         <span id="comp-with-timer" style="font-size:0.75rem; color:var(--text-secondary); font-variant-numeric:tabular-nums;"></span>
                     </div>
+                    <div id="comp-with-tokens" style="padding:0 1rem; font-size:0.7rem; color:var(--text-secondary); font-variant-numeric:tabular-nums;"></div>
                     <div class="comp-response" id="comp-with-response">
                         <div class="comp-loading">Recalling memories and asking agent...</div>
                     </div>
@@ -1442,76 +1515,6 @@
             </div>
         </div>
 
-        <!-- Tab: Entity Clusters -->
-        <div class="tab-content" id="clusters">
-            <div class="stats-row">
-                <div class="stat-card">
-                    <div class="number" id="clusters-count">0</div>
-                    <div class="label">Clusters</div>
-                </div>
-                <div class="stat-card">
-                    <div class="number" id="clusters-total-episodes">0</div>
-                    <div class="label">Episodes</div>
-                </div>
-                <div class="stat-card">
-                    <div class="number" id="clusters-noise-pct">0%</div>
-                    <div class="label">Noise Ratio</div>
-                </div>
-            </div>
-
-            <div class="filter-bar">
-                <div class="filter-group">
-                    <label>User:</label>
-                    <select id="clusters-user-filter">
-                        <option value="alice_chen">Alice Chen</option>
-                        <option value="bob_smith">Bob Smith</option>
-                        <option value="carol_johnson" selected>Carol Johnson</option>
-                    </select>
-                </div>
-                <button class="refresh-btn" onclick="loadClusters()" title="Refresh">↻ Refresh</button>
-                <button class="refresh-btn" onclick="recomputeClusters()" title="Recompute from scratch" id="recompute-clusters-btn">⚙ Recompute Clusters</button>
-                <button class="refresh-btn" onclick="resetClustersView()" title="Reset camera">⤢ Reset View</button>
-            </div>
-
-            <div style="background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:0.5rem; margin-bottom:1rem; position:relative;">
-                <div id="clusters-3d" style="width:100%; height:500px; cursor:grab;"></div>
-                <div id="clusters-tooltip" style="display:none; position:absolute; pointer-events:none; background:rgba(20,20,30,0.95); color:#fff; padding:0.5rem 0.7rem; border-radius:6px; font-size:0.78rem; max-width:280px; z-index:10;"></div>
-            </div>
-            <div id="clusters-legend" style="display:flex; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem; font-size:0.8rem;"></div>
-
-            <div id="clusters-table-content"></div>
-        </div>
-
-        <!-- Tab: Episode Relationships -->
-        <div class="tab-content" id="graph">
-            <div class="filter-bar">
-                <div class="filter-group">
-                    <label>User:</label>
-                    <select id="graph-user-filter">
-                        <option value="">All</option>
-                        <option value="alice_chen">Alice Chen</option>
-                        <option value="bob_smith">Bob Smith</option>
-                        <option value="carol_johnson">Carol Johnson</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Max nodes:</label>
-                    <select id="graph-limit-filter">
-                        <option value="150">150</option>
-                        <option value="300" selected>300</option>
-                        <option value="600">600</option>
-                    </select>
-                </div>
-                <button class="refresh-btn" onclick="loadEpisodeGraph()" title="Refresh">↻ Refresh</button>
-                <button class="refresh-btn" onclick="resetGraphView()" title="Reset pan/zoom">⤢ Reset View</button>
-            </div>
-
-            <div style="background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:0.5rem; margin-bottom:1rem; position:relative;">
-                <div id="graph-3d" style="width:100%; height:640px; cursor:grab;"></div>
-                <div id="graph-tooltip" style="display:none; position:absolute; pointer-events:none; background:rgba(20,20,30,0.95); color:#fff; padding:0.5rem 0.7rem; border-radius:6px; font-size:0.78rem; max-width:280px; z-index:10;"></div>
-            </div>
-            <div id="graph-status" style="color:var(--text-secondary); font-size:0.85rem;"></div>
-        </div>
     </div>
 
     <script>
@@ -1634,6 +1637,8 @@
                 memory_detail_display: memDetail.style.display,
                 without_timer: document.getElementById('comp-without-timer').textContent,
                 with_timer: document.getElementById('comp-with-timer').textContent,
+                without_tokens: document.getElementById('comp-without-tokens').textContent,
+                with_tokens: document.getElementById('comp-with-tokens').textContent,
             }));
         }
 
@@ -1677,6 +1682,8 @@
             document.getElementById('comp-memory-detail').style.display = state.memory_detail_display || 'none';
             document.getElementById('comp-without-timer').textContent = state.without_timer || '';
             document.getElementById('comp-with-timer').textContent = state.with_timer || '';
+            document.getElementById('comp-without-tokens').textContent = state.without_tokens || '';
+            document.getElementById('comp-with-tokens').textContent = state.with_tokens || '';
 
             const statusEl = document.getElementById('comp-status');
             statusEl.style.display = 'block';
@@ -1866,6 +1873,7 @@
                 } else {
                     status.className = 'workflow-status success';
                     status.textContent = `✓ ${(data.executions || []).length} workflow(s) triggered! Episodic appears in ~25s, Semantic in ~60s.`;
+                    btn.disabled = false;
 
                     const execContainer = document.getElementById('workflow-executions');
                     execContainer.style.display = 'flex';
@@ -1973,7 +1981,7 @@
             setTimeout(() => banner.classList.remove('show'), 5000);
         }
 
-        // Episode preview modal (shared by Entity Clusters + Episode Relationships tabs)
+        // Episode preview modal (shared by Semantic Clusters + Episode Relationships tabs)
         async function showEpisodePreview(id) {
             const backdrop = document.getElementById('episode-modal-backdrop');
             const body = document.getElementById('episode-modal-body');
@@ -2555,6 +2563,8 @@ ${results.procedural && results.procedural.length > 0
             document.getElementById('comp-memory-detail').style.display = 'none';
             document.getElementById('comp-without-timer').textContent = '';
             document.getElementById('comp-with-timer').textContent = '';
+            document.getElementById('comp-without-tokens').textContent = '';
+            document.getElementById('comp-with-tokens').textContent = '';
 
             try {
                 const resp = await fetch('/api/reset_demo', {
@@ -2596,6 +2606,12 @@ ${results.procedural && results.procedural.length > 0
             document.getElementById('comp-question').value = chip.textContent.trim();
         }
 
+        function tokenLineText(model_usage) {
+            if (!model_usage) return '';
+            const total = (model_usage.input_tokens || 0) + (model_usage.output_tokens || 0);
+            return `🔢 ${total.toLocaleString()} tokens total`;
+        }
+
         async function runComparison() {
             const userVal = document.getElementById('comp-user').value;
             const [user_id, user_name] = userVal.split('|');
@@ -2627,6 +2643,8 @@ ${results.procedural && results.procedural.length > 0
             document.getElementById('comp-memory-detail').style.display = 'none';
             document.getElementById('comp-without-timer').textContent = '';
             document.getElementById('comp-with-timer').textContent = '';
+            document.getElementById('comp-without-tokens').textContent = '';
+            document.getElementById('comp-with-tokens').textContent = '';
 
             let pending = 2;
             function oneDone() {
@@ -2658,6 +2676,7 @@ ${results.procedural && results.procedural.length > 0
                     convEl.style.display = 'block';
                     convEl.innerHTML = `Conversation: <a href="${url}" target="_blank" style="color:var(--accent-blue);word-break:break-all;">${data.conversation_id} ↗</a>`;
                 }
+                document.getElementById('comp-without-tokens').textContent = tokenLineText(data.model_usage);
                 oneDone();
             })().catch(e => {
                 document.getElementById('comp-without-response').innerHTML = '<span style="color:#f87171;">Error: ' + e.message + '</span>';
@@ -2703,6 +2722,7 @@ ${results.procedural && results.procedural.length > 0
                     convEl.style.display = 'block';
                     convEl.innerHTML = `Conversation: <a href="${url}" target="_blank" style="color:var(--accent-blue);word-break:break-all;">${data.conversation_id} ↗</a>`;
                 }
+                document.getElementById('comp-with-tokens').textContent = tokenLineText(data.model_usage);
                 oneDone();
             })().catch(e => {
                 document.getElementById('comp-with-response').innerHTML = '<span style="color:#f87171;">Error: ' + e.message + '</span>';
@@ -2711,7 +2731,7 @@ ${results.procedural && results.procedural.length > 0
         }
         // ── End Memory Comparison functions ─────────────────────────
 
-        // ── Entity Clusters tab ──────────────────────────────────────
+        // ── Semantic Clusters tab ──────────────────────────────────────
         const CLUSTER_COLORS = ['#60a5fa', '#f472b6', '#34d399', '#fbbf24', '#a78bfa', '#f87171', '#22d3ee', '#facc15', '#fb923c', '#818cf8'];
         const PCA_SCALE = 150;
 
@@ -2844,7 +2864,6 @@ ${results.procedural && results.procedural.length > 0
             clustersControls.target.set(0, 0, 0);
             clustersControls.autoRotate = true;
             clustersControls.autoRotateSpeed = 1.2;
-            clustersControls.addEventListener('start', () => { clustersControls.autoRotate = false; });
 
             clustersSharedGeometry = new THREE.SphereGeometry(1.2, 12, 12);
             points.forEach(p => {
@@ -2873,7 +2892,6 @@ ${results.procedural && results.procedural.length > 0
             }
 
             clustersRenderer.domElement.addEventListener('pointerdown', (evt) => {
-                clustersControls.autoRotate = false;
                 downPos = { x: evt.clientX, y: evt.clientY };
                 moved = 0;
             });
@@ -2905,6 +2923,9 @@ ${results.procedural && results.procedural.length > 0
             clustersRenderer.domElement.addEventListener('pointerleave', () => {
                 tooltip.style.display = 'none';
             });
+            clustersRenderer.domElement.addEventListener('dblclick', () => {
+                clustersControls.autoRotate = !clustersControls.autoRotate;
+            });
 
             function animate() {
                 clustersAnimHandle = requestAnimationFrame(animate);
@@ -2915,7 +2936,7 @@ ${results.procedural && results.procedural.length > 0
         }
 
         document.getElementById('clusters-user-filter').addEventListener('change', loadClusters);
-        // ── End Entity Clusters tab ──────────────────────────────────
+        // ── End Semantic Clusters tab ──────────────────────────────────
 
         // ── Episode Relationships tab ────────────────────────────────
         const GRAPH_WORLD = 1000;
@@ -3011,7 +3032,6 @@ ${results.procedural && results.procedural.length > 0
             graphControls.target.set(0, 0, 0);
             graphControls.autoRotate = true;
             graphControls.autoRotateSpeed = 1.2;
-            graphControls.addEventListener('start', () => { graphControls.autoRotate = false; });
 
             const allLabels = [...new Set(graphNodes.map(n => n.cluster_label).filter(l => l !== 'noise'))];
             graphSharedGeometry = new THREE.SphereGeometry(1, 10, 10);
@@ -3092,6 +3112,7 @@ ${results.procedural && results.procedural.length > 0
             const dom = graphRenderer.domElement;
             const tooltip = document.getElementById('graph-tooltip');
             const raycaster = new THREE.Raycaster();
+            raycaster.params.Line = { threshold: 6 };
             const pointerVec = new THREE.Vector2();
             const dragPlane = new THREE.Plane();
             const dragPoint = new THREE.Vector3();
@@ -3108,8 +3129,18 @@ ${results.procedural && results.procedural.length > 0
                 return graphNodeMeshes.find(m => m.mesh === hits[0].object);
             }
 
+            function pickEdge(evt) {
+                const rect = dom.getBoundingClientRect();
+                pointerVec.x = ((evt.clientX - rect.left) / rect.width) * 2 - 1;
+                pointerVec.y = -((evt.clientY - rect.top) / rect.height) * 2 + 1;
+                raycaster.setFromCamera(pointerVec, graphCamera);
+                const hits = raycaster.intersectObject(graphEdgeLines);
+                if (!hits.length) return null;
+                const edgeIndex = Math.floor(hits[0].index / 2);
+                return graphEdges[edgeIndex];
+            }
+
             dom.addEventListener('pointerdown', (evt) => {
-                graphControls.autoRotate = false;
                 downPos = { x: evt.clientX, y: evt.clientY };
                 moved = 0;
                 const hit = pickNode(evt);
@@ -3146,14 +3177,25 @@ ${results.procedural && results.procedural.length > 0
                 }
                 if (evt.buttons) { tooltip.style.display = 'none'; return; }
                 const hit = pickNode(evt);
-                dom.style.cursor = hit ? 'pointer' : 'grab';
                 if (hit) {
+                    dom.style.cursor = 'pointer';
                     const rect = dom.getBoundingClientRect();
                     tooltip.style.display = 'block';
                     tooltip.style.left = (evt.clientX - rect.left + 12) + 'px';
                     tooltip.style.top = (evt.clientY - rect.top + 12) + 'px';
                     tooltip.innerHTML = `<strong>${hit.node.topic || '(untitled)'}</strong><br>${hit.node.cluster_label} · ${hit.node.user_id}<br>importance: ${hit.node.importance_score}`;
+                    return;
+                }
+                const edgeHit = pickEdge(evt);
+                if (edgeHit) {
+                    dom.style.cursor = 'pointer';
+                    const rect = dom.getBoundingClientRect();
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (evt.clientX - rect.left + 12) + 'px';
+                    tooltip.style.top = (evt.clientY - rect.top + 12) + 'px';
+                    tooltip.innerHTML = `similarity: ${edgeHit.weight.toFixed(3)}`;
                 } else {
+                    dom.style.cursor = 'grab';
                     tooltip.style.display = 'none';
                 }
             });
@@ -3162,6 +3204,15 @@ ${results.procedural && results.procedural.length > 0
                 if (draggingNode) {
                     if (moved < 4) showEpisodePreview(draggingNode.node.id);
                     graphControls.enabled = true;
+                } else if (moved < 4) {
+                    const edgeHit = pickEdge(evt);
+                    if (edgeHit) {
+                        const rect = dom.getBoundingClientRect();
+                        tooltip.style.display = 'block';
+                        tooltip.style.left = (evt.clientX - rect.left + 12) + 'px';
+                        tooltip.style.top = (evt.clientY - rect.top + 12) + 'px';
+                        tooltip.innerHTML = `similarity: ${edgeHit.weight.toFixed(3)}`;
+                    }
                 }
                 draggingNode = null;
                 downPos = null;
@@ -3174,6 +3225,9 @@ ${results.procedural && results.procedural.length > 0
                 draggingNode = null;
                 downPos = null;
                 dom.style.cursor = 'grab';
+            });
+            dom.addEventListener('dblclick', () => {
+                graphControls.autoRotate = !graphControls.autoRotate;
             });
         }
 

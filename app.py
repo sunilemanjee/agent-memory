@@ -6,9 +6,18 @@ Requires: ES_URL and ES_ADMIN_API_KEY environment variables.
 
 import os
 import json
+import socket
 import requests
 from flask import Flask, render_template, jsonify, request
 from elasticsearch import Elasticsearch
+
+# This network cannot complete IPv6 handshakes to api.jina.ai (Cloudflare-fronted),
+# so outbound requests hang in SYN_SENT until the connect timeout expires. Force
+# IPv4-only DNS resolution process-wide rather than special-casing every caller.
+_orig_getaddrinfo = socket.getaddrinfo
+def _ipv4_only_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    return _orig_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
+socket.getaddrinfo = _ipv4_only_getaddrinfo
 
 # Configuration
 ES_URL = os.environ.get("ES_URL", "https://demo-c4ecc8.es.us-east-1.aws.elastic.cloud")
@@ -910,6 +919,7 @@ def seed_comp():
             "response": message,
             "round_index": idx,
             "panel": panel,
+            "model_usage": rnd.get("model_usage"),
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -986,4 +996,4 @@ def list_conversations():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5002, debug=True)
+    app.run(host="0.0.0.0", port=5002, debug=True, threaded=True)
